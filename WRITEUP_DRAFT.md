@@ -1,71 +1,86 @@
-# CruzGuard: An Autonomous Civic Infrastructure Agent for Santa Cruz
-### Subtitle: Turning a street photo into a public-works ticket, entirely on-device with Gemma 4's native vision and tool calling
+# CruzSurge: A Natural-Language Coastal Erosion Simulator for Santa Cruz
+### Subtitle: Type a storm scenario, watch Gemma 4 autonomously drive a live cliff-erosion simulation
 
 *Track: Autonomous Agent*
 
 ## The Problem
 
-Santa Cruz is in a constant, expensive fight against infrastructure decay: coastal bluff collapse
-along West Cliff Drive has forced repeated emergency road closures, and the city — like most
-mid-size municipalities — has no scalable way to triage everyday hazards like potholes, clogged
-storm drains, cracked sidewalks, and storm-downed trees. Today that requires a human crew to
-physically drive out and inspect every report. CruzGuard demonstrates that a single, locally-run
-open model can do the first pass: look at a photo, decide what's wrong, judge how serious it is,
-and autonomously file the paperwork — with no cloud dependency, no per-request API cost, and no
-internet connectivity requirement.
+Santa Cruz's West Cliff Drive is in an active, well-documented fight against coastal erosion. After
+the January 2023 atmospheric river storms, a block of the road stayed closed for **nearly two years**
+while the city repaired a sinkhole and seawall failure at 944/960 West Cliff Drive — an emergency
+project involving an underdrain system and 450 cubic yards of slurry-cement backfill. The city is now
+planning a **~$1.8M project, targeting 2027 construction**, to relocate roughly 400-600 feet of the
+road and pedestrian path 50-60 feet inland into Lighthouse Field State Beach, because the current
+alignment cannot be defended indefinitely. (Sources: Lookout Santa Cruz, ABC7, Santa Cruz Local, and
+the City of Santa Cruz's CEQA filing for the 944/960 West Cliff Drive emergency storm damage project.)
+
+Today, the reasoning behind these decisions — how tide level, storm intensity, and coastal defenses
+trade off against cliff stability — lives in static engineering reports and expensive modeling
+software, inaccessible to the public and slow for planners to explore interactively. CruzSurge makes
+that reasoning immediate: describe a scenario in plain English, and watch a live simulation respond.
 
 ## Architecture
 
-CruzGuard is a thin, honest wrapper around one core loop (`agent/cruzguard_agent.py`): a photo and
-a GPS location go in, `gemma4:latest` (8B, Q4_K_M, served locally via Ollama) is given a system
-prompt establishing it as a Santa Cruz civic inspector and two tool schemas — `log_hazard(category,
-severity, description)` and `dispatch_public_works(priority, recommended_action)`. The model looks
-at the image using its native vision capability, reasons about it (Gemma 4 runs with thinking
-enabled, so we get a genuine chain-of-thought for every decision), and calls `log_hazard`. If it
-judged the severity to be medium or higher, it independently decides to make a second tool call,
-`dispatch_public_works`, in the same turn-taking loop — nothing forces that second call; the model
-chooses to make it based on its own severity assessment. A final turn produces a plain-language
-summary. This is a real multi-turn agentic loop, not a single canned prompt-and-parse.
+CruzSurge has one core loop (`agent/cruzsurge_agent.py`): a natural-language scenario and the current
+simulation state go in, `gemma4:latest` (8B, Q4_K_M, served locally via Ollama) is given a system
+prompt establishing it as the simulator's operator and four tool schemas — `set_tide_level`,
+`update_wave_kinematics`, `toggle_infrastructure`, and `calculate_erosion_rate`. Gemma reads the
+scenario and decides, autonomously, which of these to call and with what arguments: it always sets
+tide and wave parameters, only touches coastal defenses if the scenario mentions them, and always
+finishes by advancing the simulation a scenario-appropriate number of hours. This is a genuine
+multi-call agentic turn, not a single classification — the model is making several dependent decisions
+in sequence, in a single turn, based on its own read of the scenario.
 
-The Streamlit dashboard (`app/app.py`) is a live console: a map of Santa Cruz starts empty and
-fills with color-coded severity pins as each location is inspected, while a side panel streams
-Gemma's actual reasoning trace and the raw tool-call JSON as it happens. A sidebar control also
-lets a judge trigger a genuine, non-cached inference call against Ollama on demand — proof this is
-live model output, not a scripted replay.
+The erosion calculation itself is a small, transparent heuristic (wave energy proportional to
+amplitude² × frequency, boosted by tide level, dampened 45-70% by active defenses, integrated over the
+simulated hours) — deliberately not something Gemma computes directly, so the simulation stays
+physically sane regardless of what's asked of it. Gemma's role is translation (English → structured
+intent), not arithmetic.
+
+The frontend is a self-contained HTML5 canvas (`app/canvas.py`, no external libraries) showing an
+animated cross-section: layered sine-wave ocean, a cliff face that visibly recedes as cumulative
+erosion increases, cracks that appear and multiply, a seawall block and rip-rap that appear/disappear
+with the agent's tool calls, and a shrinking "West Cliff Drive" road strip that displays "ROAD AT
+RISK" past 70% erosion and "ROADWAY COLLAPSE" past 95%. Everything is driven by state that Gemma's
+tool calls mutated — there is no hard-coded animation independent of the agent's decisions.
+
+By default, responses run with Ollama's `think=False`, giving ~7-10 second turnaround for a snappy,
+interactive feel; a toggle re-enables Gemma's full chain-of-thought so the reasoning behind each
+scenario can be inspected on demand.
 
 ## Why Gemma 4, specifically
 
-Gemma 4 is not a bolt-on chatbot here — it is the entire decision-making mechanism. Its **native
-vision** capability reads the photo directly with no separate object-detection model in the loop.
-Its **native tool/function calling** is what turns "look at this picture" into a structured,
-machine-actionable record — the model itself decides which function to call, with what arguments,
-and whether a second call is warranted. And because it runs **entirely offline** via Ollama on
-Apple Silicon, the same pipeline could run on a city vehicle's onboard compute with no cellular
-connection, which matters for a real municipal deployment surveying remote areas like the Santa
-Cruz Mountains after a storm.
+Gemma 4's **native tool/function calling** is not a demo feature here — it is the entire mechanism
+that turns an unstructured English sentence into a structured, physically-grounded simulation state
+change. The model has to make several linked judgment calls per scenario (what tide, what wave
+intensity, whether defenses are mentioned at all, how long to run it) and gets all of them right
+consistently across very different phrasings, from "a mild winter storm" to "a catastrophic category 5
+hurricane... run it for 72 hours." And because it runs **entirely offline** via Ollama on Apple
+Silicon, the same architecture could run on a planning department's own hardware with no cloud
+dependency or per-query cost — relevant for a tool meant to be explored interactively and often.
 
 ## Challenges in a one-day sprint
 
-The single biggest early decision was walking away from an initially more ambitious plan: fusing
-this agent with `lingbot-map`, an open-source streaming 3D reconstruction model, to turn dashcam
-video into a live 3D flythrough with hazard annotations. That pipeline requires CUDA, FlashInfer,
-and a from-source Kaolin build — none of which run on the Apple Silicon hardware available for this
-sprint. Rather than lose hours fighting an infeasible dependency, we cut it entirely and rebuilt the
-project around what Gemma 4 itself could do end-to-end, offline, on the hardware in hand. That
-turned out to be the right call: it kept 100% of the remaining time on deepening the actual Gemma
-integration (a real multi-turn tool-calling loop, not a single call) instead of fighting a build.
+The project went through two pivots before landing here, and being honest about that is part of the
+engineering story. The first concept fused this agent with `lingbot-map`, an open-source streaming 3D
+reconstruction model, to turn dashcam video into a navigable 3D flythrough of hazard sites. That
+pipeline requires CUDA, FlashInfer, and a from-source Kaolin build — none of which run on the Apple
+Silicon hardware available for this sprint — and it fundamentally needs continuous moving-camera
+video, which we didn't have a fast, honestly-licensed source for. Rather than burn the sprint's
+remaining hours on an infeasible dependency, we cut it and built a photo-based civic hazard-triage
+agent instead (`agent/cruzguard_agent.py`, kept in this repo as a working secondary prototype: same
+Gemma 4 vision + tool-calling pattern, applied to street-hazard photos). That version worked, but
+static photo pins undersold what an *interactive*, reactive agent could demonstrate.
 
-A second challenge was authenticity under real time constraints: with only a few hours and no
-opportunity to travel to every hazard site in Santa Cruz in person, the demo uses one real,
-public-domain USGS photo of an actual West Cliff Drive collapse, plus four freely-licensed
-illustrative photos (Wikimedia Commons) standing in for common Santa Cruz hazard types, mapped to
-real Santa Cruz street coordinates. `data/locations.json` documents the true source of every image
-so this is fully transparent rather than passed off as literal footage of those exact streets.
+CruzSurge is the result of taking that feedback seriously: instead of Gemma reacting to a fixed photo,
+it reacts live to open-ended natural language, with a visual payoff (a cliff eroding in real time) that
+is immediately legible without needing any technical explanation.
 
 ## Why this is a strong foundation, not just a demo
 
-The agent core is fully decoupled from the data source: it accepts any photo + location, whether
-that photo comes from a city dashcam, a resident's phone report, or a drone survey. Extending it to
-a real pipeline is a data-plumbing problem, not an architecture change — the same `log_hazard`
-and `dispatch_public_works` tools could write to an actual 311/public-works ticketing system instead
-of the simulated in-memory store used for the demo.
+The agent core is fully decoupled from the visual layer: any frontend that can render the four state
+variables (tide, wave amplitude/frequency, defenses, erosion %) could consume the same tool-calling
+loop. Because the erosion model, tool schemas, and thresholds are explicit and inspectable, the same
+architecture is a plausible starting point for a real planning tool — swap the illustrative heuristic
+for the city's actual coastal engineering model, and the Gemma-driven natural-language interface layer
+does not need to change at all.

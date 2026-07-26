@@ -1,60 +1,74 @@
-# CruzGuard 🚦
+# CruzSurge 🌊
 
-**An autonomous civic infrastructure inspection agent for Santa Cruz, CA — built entirely on Gemma 4.**
+**A natural-language coastal erosion simulator for West Cliff Drive, Santa Cruz — driven entirely by Gemma 4's native tool calling.**
 
-CruzGuard turns a street-level photo into a structured, actionable public-works ticket. It is
-built for the **CruzHacks "Build with Gemma" hackathon (Autonomous Agent Track)** and demonstrates
-Gemma 4 running **100% locally and offline** via Ollama, using its native **vision** and **tool
-calling (function calling)** capabilities as the actual mechanism that does the work — not a
-chatbot wrapper.
+Type a storm scenario in plain English — *"a category 5 hurricane hits at king tide with no seawall"* —
+and watch a live cliff/ocean simulation react: waves grow, the seawall status updates, and the cliff
+visibly erodes until the road is at risk or gone. Every parameter change on screen is a real,
+autonomous function call made by `gemma4:latest` running 100% locally via Ollama — no cloud API, no
+internet dependency.
 
-## The problem
+Built for the **CruzHacks "Build with Gemma" hackathon (Autonomous Agent Track)**.
 
-Santa Cruz deals with constant, expensive-to-survey infrastructure damage: coastal bluff collapse
-along West Cliff Drive, potholes, clogged storm drains, cracked sidewalks, and storm-downed trees.
-Today, identifying and triaging these hazards requires a human crew to drive out and look. CruzGuard
-shows how a single locally-run open model can do the first pass: look at a photo, decide what's
-wrong, decide how bad it is, and autonomously file the ticket — no cloud API, no internet
-dependency, fully private.
+## The problem, with real numbers
+
+City planners currently manage coastal erosion along West Cliff Drive with static engineering reports
+and expensive modeling software, reacting only after storms cause damage. The numbers are real and
+verified:
+
+- **~30 months (nearly 2 years)**: how long a block of West Cliff Drive stayed closed after the
+  January 2023 atmospheric river storms damaged the seawall and roadway.
+  ([Lookout Santa Cruz](https://lookout.co/city-to-reopen-part-of-west-cliff-to-two-way-traffic-after-a-near-two-year-closure), [ABC7](https://abc7news.com/post/west-cliff-drive-reopens-santa-cruz-2-year-closure-winter-storm-damage/17519748/))
+- **944/960 West Cliff Drive**: sites of an emergency-declared sinkhole and seawall failure, repaired
+  with an underdrain system and 450 cubic yards of slurry-cement backfill.
+  ([City of Santa Cruz CEQA filing](https://ceqanet.lci.ca.gov/2024100649))
+- **~$1.8M, construction targeting 2027**: the city's plan to relocate roughly 400-600 ft of road and
+  the pedestrian path 50-60 ft inland into Lighthouse Field State Beach, because the current
+  alignment can't be defended long-term.
+  ([Lookout Santa Cruz](https://lookout.co/city-of-santa-cruz-eyes-2027-construction-for-partial-west-cliff-drive-roadway-path-relocation/story), [Santa Cruz Local](https://santacruzlocal.org/2024/11/20/5-year-west-cliff-plan/))
+
+CruzSurge makes the qualitative reasoning behind those decisions — how tide, wave energy, and coastal
+defenses trade off against the cliff — interactive and immediate, for planners and the public alike.
 
 ## How it works
 
 ```
-photo + GPS location
-        │
-        ▼
- Gemma 4 (gemma4:latest, 8B, Q4_K_M) via Ollama — vision + native tool calling
-        │
-        ├─ turn 1: model reasons over the image, calls log_hazard(category, severity, description)
-        ├─ turn 2 (if severity ≥ medium): model calls dispatch_public_works(priority, action)
-        └─ turn 3: model summarizes the assessment in plain language
-        │
-        ▼
- structured hazard record ──> Streamlit dashboard: live map pin + full reasoning trace
+"a category 5 hurricane hits at king tide, no seawall"
+                    │
+                    ▼
+   Gemma 4 (gemma4:latest, 8B, Q4_K_M) via Ollama — native tool calling, text-only
+                    │
+   ├─ set_tide_level(level)
+   ├─ update_wave_kinematics(amplitude, frequency)
+   ├─ toggle_infrastructure(defense_type, active)      [only if defenses are mentioned]
+   └─ calculate_erosion_rate(simulated_hours)
+                    │
+                    ▼
+   simulation state (tide, waves, defenses, cumulative erosion %)
+                    │
+                    ▼
+   self-contained HTML5 canvas: animated ocean, receding cliff, road, seawall
 ```
 
-This is a genuine multi-turn **agentic loop**, not a single canned prompt: the model decides for
-itself, per image, whether a second tool call is warranted based on the severity it just assigned.
-See `agent/cruzguard_agent.py` for the full loop (system prompt, tool schemas, and the turn-by-turn
-message handling).
+This is a genuine agentic loop (see `agent/cruzsurge_agent.py`): Gemma decides, per scenario, which
+of the four tools to call and with what arguments — including whether to touch coastal defenses at
+all, and how many hours to simulate. The erosion calculation itself (`_erosion_model`) is a small,
+transparent, explainable heuristic — wave energy proportional to amplitude² × frequency, boosted by
+tide level, dampened by active defenses — not something the model touches directly, which keeps the
+simulation physically sane no matter what Gemma is asked to do to it.
 
-### Why the reasoning trace matters
-
-`gemma4:latest` runs with thinking enabled, so every response includes the model's real
-chain-of-thought before it calls a tool. Rather than hiding this, the dashboard streams it live —
-it's the most convincing evidence that Gemma is actually doing the inspection, not a script.
+Responses run with `think=False` by default (~7-10s) for a snappy, interactive feel; a "Fast mode"
+toggle lets you re-enable Gemma's full chain-of-thought reasoning trace when you want to see it.
 
 ## Project layout
 
 ```
-agent/cruzguard_agent.py   # the only place Gemma 4 is called — system prompt, tool schemas, agent loop
-app/app.py                 # Streamlit dashboard (live map + agent trace + hazard log)
-app/severity.py            # severity → color/icon mapping shared by the UI
-scripts/precompute.py      # batch-runs the agent over data/locations.json, caches to data/results.json
-scripts/test_ollama.py     # minimal smoke test for vision + tool calling against Ollama
-data/locations.json        # the 5 demo locations (image, label, real Santa Cruz lat/lon, source)
-data/images/               # hazard photos (see Data & attribution below)
-data/results.json          # cached agent output, generated by scripts/precompute.py
+agent/cruzsurge_agent.py   # Gemma 4 tool-calling agent for the coastal simulator (the core)
+app/canvas.py               # self-contained HTML5 canvas renderer (ocean/cliff/road/seawall)
+app/surge_app.py             # Streamlit dashboard: chat input + live canvas + reasoning trace
+agent/cruzguard_agent.py    # earlier prototype: same agent pattern, applied to photo hazard-triage
+app/app.py, app/severity.py # CruzGuard's dashboard (kept as a secondary, working prototype)
+data/                        # CruzGuard's demo photos/locations (unused by CruzSurge)
 ```
 
 ## Running it
@@ -63,46 +77,24 @@ Requires [Ollama](https://ollama.com) with `gemma4:latest` pulled locally (`olla
 
 ```bash
 pip install -r requirements.txt
-
-# 1. Pre-run the agent over all demo locations (takes a few minutes on CPU/Metal — thinking mode
-#    means each image involves real multi-step reasoning, not a fast classifier call)
-python3 scripts/precompute.py
-
-# 2. Launch the dashboard
-streamlit run app/app.py
+streamlit run app/surge_app.py
 ```
 
-In the sidebar:
-- **▶️ Run Cinematic Demo** replays the cached inspection of all 5 locations with the live reasoning
-  trace and map pins animating in, in order.
-- **⚡ Run Gemma 4 live on this photo** bypasses the cache entirely and runs a real, fresh inference
-  call against Ollama on demand — this is there specifically to prove the integration is real and
-  not pre-baked.
-
-## Data & attribution
-
-No proprietary or private data is used. Given the 1-day sprint window, the demo uses:
-
-- **West Cliff Drive coastal erosion** — a real, public-domain USGS photo of an actual Santa Cruz
-  bluff/road collapse on West Cliff Drive (source: USGS Media Library).
-- **Pothole, storm drain, cracked sidewalk, fallen tree** — freely licensed (Creative Commons)
-  illustrative photos from Wikimedia Commons, standing in for a real Santa Cruz report of that
-  hazard type. GPS coordinates are assigned to real Santa Cruz street locations for the map demo;
-  these four photos are not literal photos of those specific streets, and `data/locations.json`
-  records the true source of every image.
-
-In a real deployment, these photos would instead come from a city vehicle dashcam, a resident's
-report, or a drone survey — CruzGuard's agent logic is agnostic to where the photo comes from.
+Try the two presets in the sidebar, or type your own scenario — e.g. *"a mild winter storm at low
+tide with the seawall up"* vs *"a catastrophic category 5 hurricane at king tide with no coastal
+defenses, run 72 hours"* — and watch the cliff respond differently.
 
 ## Why Gemma 4
 
-- **Vision**: reads the photo directly, no separate object-detection model needed.
-- **Native tool calling**: the model itself decides which structured function to call and with
-  what arguments — this is what makes it an *agent* rather than a classifier.
-- **Runs fully offline** (Ollama, Apple Silicon/Metal): no API key, no per-request cost, no
-  connectivity requirement — meaningful for a municipal deployment that might run on a vehicle
-  without reliable cellular service.
+- **Native tool calling** is the entire mechanism, not a demo feature bolted on: Gemma reads an
+  unstructured English sentence and decides which structured simulation functions to call, with what
+  arguments, including judgment calls like whether defenses were mentioned at all.
+- **Runs fully offline** via Ollama on Apple Silicon: no API key, no per-request cost, no
+  connectivity requirement.
+- **`agent/cruzguard_agent.py`** demonstrates the same pattern works with **vision** too (photo →
+  hazard classification → dispatch ticket), showing the agent architecture generalizes across input
+  modalities, not just this one demo.
 
 ## Track
 
-Primary: **Autonomous Agent Track** (native function calling drives the entire pipeline).
+Primary: **Autonomous Agent Track** (native function calling drives the entire simulation state).
