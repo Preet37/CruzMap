@@ -1,0 +1,42 @@
+[
+  {
+    "id": "west_cliff_erosion",
+    "image": "coastal_erosion_west_cliff.jpg",
+    "label": "West Cliff Drive",
+    "lat": 36.9506,
+    "lon": -122.0288,
+    "source": "USGS (public domain) - actual West Cliff Drive, Santa Cruz storm damage photo"
+  },
+  {
+    "id": "pacific_ave_pothole",
+    "image": "pothole.jpg",
+    "label": "Pacific Avenue",
+    "lat": 36.9741,
+    "lon": -122.0297,
+    "source": "Wikimedia Commons (CC) - illustrative pothole photo, not an actual Pacific Ave photo"
+  },
+  {
+    "id": "soquel_storm_drain",
+    "image": "storm_drain.jpg",
+    "label": "Soquel Avenue storm drain",
+    "lat": 36.9772,
+    "lon": -122.0166,
+    "source": "Wikimedia Commons (CC) - illustrative storm drain photo"
+  },
+  {
+    "id": "ucsc_quarry_sidewalk",
+    "image": "cracked_sidewalk.jpg",
+    "label": "UCSC Quarry Plaza walkway",
+    "lat": 36.9905,
+    "lon": -122.0579,
+    "source": "Wikimedia Commons (CC) - illustrative cracked sidewalk photo"
+  },
+  {
+    "id": "delaveaga_fallen_tree",
+    "image": "fallen_tree.jpg",
+    "label": "DeLaveaga Park access road",
+    "lat": 36.9847,
+    "lon": -121.9989,
+    "source": "Wikimedia Commons (CC) - illustrative fallen tree/storm debris photo"
+  }
+]
