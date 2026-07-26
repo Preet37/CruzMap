@@ -1,6 +1,6 @@
 """CruzSurge v2 backend: a thin Flask API around agent/cruzsurge_agent.py.
-The user-facing page (web/index.html) never shows code or terminal output —
-it only ever sees JSON results rendered into a polished UI."""
+The user-facing page (web/index.html) never shows code or terminal output.
+It only ever sees JSON results rendered into a polished UI."""
 
 import os
 import sys

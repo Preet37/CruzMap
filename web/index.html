@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CruzSurge — West Cliff Drive Coastal Hazard Instrument</title>
+<title>CruzSurge: West Cliff Drive Coastal Hazard Instrument</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -328,7 +328,7 @@
 
 <section class="hero">
   <h1>West Cliff Drive<br>is <em>disappearing.</em></h1>
-  <p class="sub">Describe a storm in plain English. Gemma 4 — running entirely on this laptop, no cloud —
+  <p class="sub">Describe a storm in plain English. Gemma 4, running entirely on this laptop with no cloud,
     autonomously reasons about tide, wave energy, and coastal defenses, then drives a live simulation of
     what happens to the cliff. This is the same qualitative reasoning behind the city's own retreat-and-defend
     planning, made interactive.</p>
@@ -343,8 +343,8 @@
 
 <section id="problem">
   <p class="eyebrow reveal">The record, verified</p>
-  <h2 class="reveal" style="font-size:2.1em;margin:0;max-width:680px;">Every number below is sourced —
-    not a hackathon guess.</h2>
+  <h2 class="reveal" style="font-size:2.1em;margin:0;max-width:680px;">Every number below is sourced.
+    Not a hackathon guess.</h2>
   <div class="stat-grid">
     <div class="stat-card reveal">
       <div class="stat-num"><span class="cnt" data-target="30" data-suffix="">0</span> mo</div>
@@ -353,7 +353,7 @@
     </div>
     <div class="stat-card reveal">
       <div class="stat-num">$<span class="cnt" data-target="1.8" data-decimals="1">0</span>M</div>
-      <div class="stat-label">Cost of the city's plan to relocate the road inland — because the current alignment can't be defended.</div>
+      <div class="stat-label">Cost of the city's plan to relocate the road inland, because the current alignment can't be defended.</div>
       <div class="stat-src">Lookout Santa Cruz · Santa Cruz Local</div>
     </div>
     <div class="stat-card reveal">
@@ -367,6 +367,10 @@
       <div class="stat-src">City of Santa Cruz CEQA filing</div>
     </div>
   </div>
+  <p class="reveal" style="color:var(--ink-soft);max-width:640px;margin-top:24px;font-size:0.92em;">
+    This isn't a replacement for the engineering-grade modeling the city already uses. It's a
+    communication tool: a way for anyone, not just an engineer, to feel the tradeoff.
+  </p>
 </section>
 
 <div class="console-section" id="simulator">
@@ -386,10 +390,9 @@
           <div class="flash-overlay" id="flashOverlay"></div>
           <canvas id="surge" width="1200" height="620"></canvas>
         </div>
-        <div class="console-badges" id="badges"></div>
 
         <div class="panel-card" style="margin-top:18px;">
-          <p class="panel-title">Live controls — drag to adjust <span class="live-tag"><span class="dot"></span>erosion clock running</span></p>
+          <p class="panel-title">Drag to adjust <span class="live-tag"><span class="dot"></span>erosion clock running</span></p>
 
           <div class="segmented" id="tideSeg">
             <div class="seg-btn" data-v="low">Low tide</div>
@@ -413,13 +416,10 @@
           </div>
 
           <div class="readout-grid">
-            <div class="readout-item"><div class="ro-label">Wave energy</div><div class="ro-val" id="roEnergy">0.03</div></div>
-            <div class="readout-item"><div class="ro-label">Defense factor</div><div class="ro-val" id="roDefense">45%</div></div>
             <div class="readout-item"><div class="ro-label">Erosion rate</div><div class="ro-val" id="roRate">0.1%/min</div></div>
-            <div class="readout-item"><div class="ro-label">Time to collapse</div><div class="ro-val" id="roEta">—</div></div>
+            <div class="readout-item"><div class="ro-label">Time to collapse</div><div class="ro-val" id="roEta">n/a</div></div>
           </div>
-          <p class="readout-note">Live formula: <code>rate ∝ amplitude² × (0.4 + frequency) × tide × (1 − defense)</code> —
-            drag any control and watch the cliff respond in real time, no AI call needed.</p>
+          <p class="readout-note">Drag any control and the cliff responds instantly. No AI call needed for this part.</p>
         </div>
       </div>
 
@@ -432,10 +432,10 @@
           </div>
           <div class="presets" id="presets"></div>
           <div class="calib" id="calibBtn">
-            <b>⚓ Real-world calibration —</b> recreate the January 2023 storm that closed this road for ~2 years.
+            <b>⚓ Real-world calibration:</b> recreate the January 2023 storm that closed this road for ~2 years.
           </div>
           <div class="auto-row">
-            <button id="autoDemo">▶ Auto-demo — run all four scenarios</button>
+            <button id="autoDemo">▶ Auto-demo: run all four scenarios</button>
             <button id="stopDemo">■ Stop</button>
           </div>
         </div>
@@ -470,7 +470,7 @@
   <p class="eyebrow reveal">Signal path</p>
   <h2 class="reveal" style="font-size:2.1em;margin:0 0 8px;max-width:680px;">One sentence in. Four autonomous decisions out.</h2>
   <p class="reveal" style="color:var(--ink-soft);max-width:640px;">This is the actual order data moves through the
-    system — Gemma 4 decides all four steps in a single turn, including whether coastal defenses were mentioned at all.</p>
+    system. Gemma 4 decides all four steps in a single turn, including whether coastal defenses were mentioned at all.</p>
 
   <div class="signal-path reveal">
     <div class="signal-node">
@@ -485,7 +485,7 @@
       <div class="pulse-dot" style="animation-delay:1.1s;"></div>
       <div class="glyph">🧠</div>
       <div class="label">02 · Reasoning</div>
-      <div class="desc">Gemma 4 reasons about tide, wave energy, and defenses — locally, via Ollama.</div>
+      <div class="desc">Gemma 4 reasons about tide, wave energy, and defenses locally, via Ollama.</div>
     </div>
     <div class="signal-node">
       <div class="signal-line"></div>
@@ -497,7 +497,7 @@
     <div class="signal-node">
       <div class="glyph">🌊</div>
       <div class="label">04 · Response</div>
-      <div class="desc">The cliff, road, and warnings react live — no hard-coded animation.</div>
+      <div class="desc">The cliff, road, and warnings react live. Nothing here is hard-coded.</div>
     </div>
   </div>
 </section>
@@ -582,7 +582,6 @@ async function resetSimulation() {
   liveState.simulated_hours_total = s.simulated_hours_total;
   lastDebrisThreshold = 0; failureFired = false;
   syncControlsToState();
-  renderBadges(liveState);
   renderGauge(liveState.erosion_pct);
   updateReadout();
   renderReasoning([]);
@@ -590,28 +589,6 @@ async function resetSimulation() {
   document.getElementById('duration').textContent = '';
 }
 document.getElementById('resetLink').onclick = resetSimulation;
-
-function severityLabel(amp, freq) {
-  const s = (amp + freq) / 2;
-  if (s < 0.2) return "Calm";
-  if (s < 0.4) return "Moderate";
-  if (s < 0.65) return "Severe";
-  return "Extreme";
-}
-
-function renderBadges(state) {
-  const badges = document.getElementById('badges');
-  const defense = state.seawall_active && state.rip_rap_active ? "Seawall + rip-rap"
-                : state.seawall_active ? "Seawall active"
-                : state.rip_rap_active ? "Rip-rap only"
-                : "No defenses";
-  badges.innerHTML = `
-    <span class="badge">TIDE&nbsp;<b>${state.tide_level.replace('_',' ')}</b></span>
-    <span class="badge">WAVE&nbsp;<b>${severityLabel(state.wave_amplitude, state.wave_frequency)}</b></span>
-    <span class="badge">DEFENSE&nbsp;<b>${defense}</b></span>
-    <span class="badge">SIMULATED&nbsp;<b>${state.simulated_hours_total}h</b></span>
-  `;
-}
 
 function gaugeColor(pct) {
   if (pct < 25) return "#0E6E82";
@@ -662,19 +639,15 @@ function erosionRatePerSecond(s) {
 
 function updateReadout() {
   const s = liveState;
-  const waveEnergy = Math.pow(s.wave_amplitude, 2) * (0.4 + s.wave_frequency);
-  const defenseFactor = (s.seawall_active ? 0.45 : 1) * (s.rip_rap_active ? 0.7 : 1);
   const ratePerSec = erosionRatePerSecond(s);
   const ratePerMin = ratePerSec * 60;
-  document.getElementById('roEnergy').textContent = waveEnergy.toFixed(2);
-  document.getElementById('roDefense').textContent = Math.round((1 - defenseFactor) * 100) + '%';
   document.getElementById('roRate').textContent = ratePerMin.toFixed(1) + '%/min';
   const remaining = 100 - s.erosion_pct;
   if (ratePerSec > 0.01 && remaining > 0.5) {
     const secs = remaining / ratePerSec;
     document.getElementById('roEta').textContent = secs < 60 ? Math.ceil(secs) + 's' : Math.ceil(secs / 60) + 'm';
   } else {
-    document.getElementById('roEta').textContent = remaining <= 0.5 ? 'collapsed' : '—';
+    document.getElementById('roEta').textContent = remaining <= 0.5 ? 'collapsed' : 'n/a';
   }
 }
 
@@ -689,30 +662,30 @@ function syncControlsToState() {
 }
 
 document.querySelectorAll('#tideSeg .seg-btn').forEach(btn => {
-  btn.onclick = () => { liveState.tide_level = btn.dataset.v; syncControlsToState(); updateReadout(); renderBadges(liveState); };
+  btn.onclick = () => { liveState.tide_level = btn.dataset.v; syncControlsToState(); updateReadout(); };
 });
 document.getElementById('ampSlider').oninput = (e) => {
   liveState.wave_amplitude = parseFloat(e.target.value);
   document.getElementById('ampVal').textContent = liveState.wave_amplitude.toFixed(2);
-  updateReadout(); renderBadges(liveState);
+  updateReadout();
 };
 document.getElementById('freqSlider').oninput = (e) => {
   liveState.wave_frequency = parseFloat(e.target.value);
   document.getElementById('freqVal').textContent = liveState.wave_frequency.toFixed(2);
-  updateReadout(); renderBadges(liveState);
+  updateReadout();
 };
 document.getElementById('seawallToggle').onclick = () => {
-  liveState.seawall_active = !liveState.seawall_active; syncControlsToState(); updateReadout(); renderBadges(liveState);
+  liveState.seawall_active = !liveState.seawall_active; syncControlsToState(); updateReadout();
 };
 document.getElementById('ripRapToggle').onclick = () => {
-  liveState.rip_rap_active = !liveState.rip_rap_active; syncControlsToState(); updateReadout(); renderBadges(liveState);
+  liveState.rip_rap_active = !liveState.rip_rap_active; syncControlsToState(); updateReadout();
 };
 
 async function fetchInitialState() {
   const res = await fetch('/api/state');
   liveState = await res.json();
   liveState._tideOffset = tideOffsetFor(liveState.tide_level);
-  renderBadges(liveState);
+ 
   renderGauge(liveState.erosion_pct);
   syncControlsToState();
   updateReadout();
@@ -738,7 +711,7 @@ async function runScenario(command, opts) {
     liveState.erosion_pct = Math.max(liveState.erosion_pct, data.state.erosion_pct);
     liveState.simulated_hours_total = data.state.simulated_hours_total;
     syncControlsToState();
-    renderBadges(liveState);
+   
     renderGauge(liveState.erosion_pct);
     updateReadout();
     renderReasoning(data.trace);
@@ -746,7 +719,7 @@ async function runScenario(command, opts) {
     document.getElementById('duration').textContent = `Response time: ${data.duration_sec}s`;
     if (opts.auto) document.querySelector('details.reasoning').open = true;
   } catch (err) {
-    document.getElementById('summary').textContent = 'No response from the simulator — confirm the backend is running.';
+    document.getElementById('summary').textContent = 'No response from the simulator. Confirm the backend is running.';
   }
   runBtn.disabled = false;
   runBtn.textContent = 'Run';
