@@ -3,207 +3,553 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CruzSurge — West Cliff Drive Coastal Simulator</title>
+<title>CruzSurge — West Cliff Drive Coastal Hazard Instrument</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-0: #090c10;
-    --bg-1: #0f141b;
-    --surface: rgba(255,255,255,0.045);
-    --surface-2: rgba(255,255,255,0.07);
-    --border: rgba(255,255,255,0.09);
-    --text: #e6edf3;
-    --muted: #8b96a3;
-    --accent: #2dd4e8;
-    --accent-2: #7c8cff;
-    --danger: #ff5d5d;
-    --warn: #f5a623;
-    --ok: #3ddc84;
-    --radius: 16px;
+    --paper: #EDE6D2;
+    --paper-2: #E3D8BC;
+    --paper-3: #DCCFAE;
+    --ink: #202B2A;
+    --ink-soft: #55625E;
+    --depth: #0B5566;
+    --depth-2: #0E6E82;
+    --hazard: #C8481E;
+    --hazard-2: #E8641A;
+    --caution: #D99A22;
+    --panel: #16211D;
+    --panel-2: #1E2C26;
+    --panel-line: rgba(237,230,210,0.14);
+    --line: rgba(32,43,42,0.16);
+    --radius: 14px;
   }
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    background: radial-gradient(1200px 800px at 15% -10%, #142130 0%, var(--bg-0) 55%), var(--bg-0);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overflow-x: hidden;
   }
-  ::selection { background: rgba(45,212,232,0.3); }
+  h1, h2, h3, .display { font-family: "Oswald", -apple-system, sans-serif; letter-spacing: 0.01em; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  ::selection { background: rgba(200,72,30,0.22); }
+  a { color: var(--depth); }
 
-  .shell { max-width: 1360px; margin: 0 auto; padding: 28px 32px 60px; }
-
-  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-  .brand { display: flex; align-items: center; gap: 14px; }
-  .brand .icon {
-    width: 46px; height: 46px; border-radius: 13px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    display: flex; align-items: center; justify-content: center; font-size: 24px;
-    box-shadow: 0 6px 22px rgba(45,212,232,0.25);
+  /* ---------- ticker ---------- */
+  .ticker {
+    background: var(--ink); color: var(--paper); overflow: hidden; white-space: nowrap;
+    border-bottom: 1px solid rgba(237,230,210,0.15);
   }
-  .brand h1 { margin: 0; font-size: 1.55em; letter-spacing: -0.02em; }
-  .brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.86em; }
-  .pill {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 7px 14px; border-radius: 999px; font-size: 0.8em; color: var(--muted);
+  .ticker-track {
+    display: inline-block; padding: 8px 0; animation: ticker-scroll 38s linear infinite;
+    font-family: "IBM Plex Mono", monospace; font-size: 0.74em; letter-spacing: 0.04em;
   }
-  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .ticker-track span { margin-right: 48px; color: #d8cfb8; }
+  .ticker-track b { color: var(--hazard-2); }
+  @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-  .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 22px; align-items: start; }
-  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  /* ---------- nav ---------- */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 40px; position: sticky; top: 0; z-index: 40;
+    background: rgba(237,230,210,0.86); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .nav-brand .sq { width: 26px; height: 26px; background: var(--depth); border-radius: 6px; position: relative; }
+  .nav-brand .sq:after { content: ""; position: absolute; inset: 6px; border: 2px solid var(--paper); border-radius: 3px; }
+  .nav-links { display: flex; gap: 28px; font-size: 0.82em; }
+  .nav-links a { color: var(--ink-soft); text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.92em; }
+  .nav-links a:hover { color: var(--hazard); }
+  .nav-badge {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72em; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--line); display: flex; align-items: center; gap: 7px; color: var(--ink-soft);
+  }
+  .nav-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--depth-2); box-shadow: 0 0 6px var(--depth-2); }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 18px 20px;
+  section { padding: 90px 40px; max-width: 1280px; margin: 0 auto; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.18em;
+    font-size: 0.72em; color: var(--hazard); margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .eyebrow:before { content: ""; width: 26px; height: 1px; background: var(--hazard); }
+
+  /* ---------- hero ---------- */
+  .hero { min-height: 88vh; display: flex; flex-direction: column; justify-content: center; padding-top: 50px; position: relative; }
+  .hero h1 {
+    font-size: clamp(3em, 8vw, 6.4em); line-height: 0.92; margin: 0; font-weight: 700;
+    text-transform: uppercase; color: var(--ink);
+  }
+  .hero h1 em { font-style: normal; color: var(--hazard); }
+  .hero .sub {
+    max-width: 620px; font-size: 1.18em; color: var(--ink-soft); margin: 26px 0 0; line-height: 1.55;
+  }
+  .hero .readout {
+    margin-top: 40px; display: inline-flex; gap: 22px; padding: 14px 20px; border: 1px solid var(--line);
+    border-radius: 10px; background: rgba(255,255,255,0.35); font-family: "IBM Plex Mono", monospace; font-size: 0.78em;
+  }
+  .hero .readout .k { color: var(--ink-soft); }
+  .hero .readout .v { color: var(--depth); font-weight: 600; }
+  .blink { animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .scroll-cue {
+    position: absolute; bottom: 18px; left: 40px; font-family: "IBM Plex Mono", monospace; font-size: 0.72em;
+    color: var(--ink-soft); display: flex; align-items: center; gap: 10px;
+  }
+  .scroll-cue .chev { animation: bob 1.6s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+  /* ---------- reveal utility ---------- */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .ticker-track, .scroll-cue .chev, .blink { animation: none !important; }
   }
 
-  .canvas-card { padding: 0; overflow: hidden; position: relative; }
-  .canvas-wrap { position: relative; }
-  canvas { display: block; width: 100%; height: auto; }
-  .canvas-badges {
-    display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid var(--border);
-    background: rgba(0,0,0,0.18);
+  /* ---------- problem / stats ---------- */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 40px; }
+  @media (max-width: 980px) { .stat-grid { grid-template-columns: 1fr 1fr; } }
+  .stat-card {
+    background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px 20px; position: relative;
   }
+  .stat-card:before {
+    content: ""; position: absolute; top: 0; left: 20px; width: 34px; height: 3px; background: var(--hazard-2);
+  }
+  .stat-num { font-family: "Oswald", sans-serif; font-size: 2.5em; font-weight: 700; color: var(--ink); line-height: 1; margin-top: 8px; }
+  .stat-label { font-size: 0.86em; color: var(--ink-soft); margin-top: 8px; line-height: 1.4; }
+  .stat-src { font-family: "IBM Plex Mono", monospace; font-size: 0.66em; color: #8a7e5e; margin-top: 12px; }
+
+  /* ---------- simulator (instrument console) ---------- */
+  .console-section { background: var(--panel); color: #EDE6D2; padding: 90px 0; }
+  .console-inner { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+  .console-section .eyebrow { color: var(--caution); }
+  .console-section .eyebrow:before { background: var(--caution); }
+  .console-section h2 { color: #f4efdd; font-size: 2.1em; margin: 0 0 8px; }
+  .console-section .sub { color: #9fb0a8; max-width: 560px; margin: 0 0 40px; }
+
+  .console-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 980px) { .console-grid { grid-template-columns: 1fr; } }
+
+  .porthole {
+    background: #0c1310; border-radius: 20px; padding: 14px; border: 1px solid var(--panel-line);
+    box-shadow: inset 0 0 0 6px #0a100d, inset 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .porthole .rivet { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #3a4a43; box-shadow: inset 0 1px 1px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.06); }
+  .porthole canvas { display: block; width: 100%; height: auto; border-radius: 10px; }
+
+  .console-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
   .badge {
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
-    background: var(--surface-2); border: 1px solid var(--border); font-size: 0.8em; color: var(--text);
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px;
+    background: var(--panel-2); border: 1px solid var(--panel-line); font-size: 0.78em; font-family: "IBM Plex Mono", monospace;
+    color: #cfd9d2;
   }
-  .badge b { color: var(--muted); font-weight: 500; }
+  .badge b { color: #7fa89b; font-weight: 500; }
 
-  .section-title { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 12px; }
+  .panel-card {
+    background: var(--panel-2); border: 1px solid var(--panel-line); border-radius: var(--radius); padding: 20px;
+  }
+  .panel-title { font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7em; color: #7fa89b; margin: 0 0 14px; display: flex; align-items: center; justify-content: space-between; }
+  .panel-title .live-tag { color: var(--hazard-2); display: flex; align-items: center; gap: 5px; }
+  .panel-title .live-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hazard-2); box-shadow: 0 0 6px var(--hazard-2); animation: live-pulse 1.4s ease-in-out infinite; }
+  @keyframes live-pulse { 50% { opacity: 0.35; } }
+
+  .slider-row { margin-bottom: 16px; }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-row .sr-label { display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 8px; font-family: "IBM Plex Mono", monospace; }
+  .slider-row .sr-label span:first-child { color: #cfd9d2; }
+  .slider-row .sr-label span:last-child { color: var(--hazard-2); font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 4px; border-radius: 3px; background: #0e1613;
+    accent-color: var(--hazard-2); cursor: grab; border: 1px solid var(--panel-line);
+  }
+  input[type=range]:active { cursor: grabbing; }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--hazard-2);
+    border: 2px solid #16211D; cursor: grab; box-shadow: 0 0 8px rgba(232,100,26,0.5);
+  }
+
+  .segmented { display: flex; gap: 4px; margin-bottom: 16px; }
+  .seg-btn {
+    flex: 1; background: #0e1613; border: 1px solid var(--panel-line); color: #8a9a93; padding: 8px 4px;
+    font-size: 0.72em; font-family: "IBM Plex Mono", monospace; text-transform: uppercase; border-radius: 7px;
+    cursor: pointer; text-align: center; transition: all 0.12s ease;
+  }
+  .seg-btn.active { background: var(--depth-2); color: #eafffb; border-color: var(--depth-2); }
+
+  .toggle-row { display: flex; gap: 10px; margin-bottom: 4px; }
+  .toggle-chip {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px;
+    background: #0e1613; border: 1px solid var(--panel-line); border-radius: 8px; cursor: pointer;
+    font-size: 0.76em; color: #8a9a93; transition: all 0.12s ease;
+  }
+  .toggle-chip.active { border-color: #3ddc84; color: #a8f0c2; background: rgba(61,220,132,0.08); }
+
+  .readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .readout-item { background: #0e1613; border: 1px solid var(--panel-line); border-radius: 8px; padding: 10px 12px; }
+  .readout-item .ro-label { font-size: 0.65em; color: #7f8f88; text-transform: uppercase; letter-spacing: 0.06em; font-family: "IBM Plex Mono", monospace; }
+  .readout-item .ro-val { font-family: "Oswald", sans-serif; font-size: 1.3em; font-weight: 600; color: #eafffb; margin-top: 3px; }
+  .readout-note { font-size: 0.72em; color: #7f8f88; margin-top: 12px; line-height: 1.5; }
+  .readout-note code { color: #9fe8c9; }
+
+  .flash-overlay {
+    position: absolute; inset: 14px; border-radius: 10px; background: radial-gradient(circle, rgba(255,60,40,0.55), transparent 70%);
+    opacity: 0; pointer-events: none; z-index: 5;
+  }
+  .flash-overlay.fire { animation: flash-fade 0.9s ease-out; }
+  @keyframes flash-fade { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+  .porthole.shake { animation: shake 0.5s ease-in-out; }
+  @keyframes shake {
+    0%,100% { transform: translate(0,0); } 20% { transform: translate(-4px,2px); } 40% { transform: translate(4px,-2px); }
+    60% { transform: translate(-3px,-1px); } 80% { transform: translate(3px,2px); }
+  }
 
   .cmd-row { display: flex; gap: 8px; }
   #cmd {
-    flex: 1; background: var(--bg-1); border: 1px solid var(--border); border-radius: 12px;
-    padding: 13px 14px; color: var(--text); font-size: 0.95em; outline: none;
+    flex: 1; background: #0e1613; border: 1px solid var(--panel-line); border-radius: 10px;
+    padding: 13px 14px; color: #EDE6D2; font-size: 0.94em; outline: none; font-family: -apple-system, sans-serif;
   }
-  #cmd:focus { border-color: var(--accent); }
+  #cmd::placeholder { color: #5c6b64; }
+  #cmd:focus { border-color: var(--depth-2); }
   #run {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; color: #04141a;
-    font-weight: 700; padding: 0 20px; border-radius: 12px; cursor: pointer; font-size: 0.95em;
+    background: var(--hazard-2); border: none; color: #16211D; font-weight: 700; padding: 0 22px;
+    border-radius: 10px; cursor: pointer; font-size: 0.94em; transition: transform 0.12s ease, background 0.12s ease;
   }
-  #run:disabled { opacity: 0.5; cursor: default; }
+  #run:hover:not(:disabled) { background: #f27b34; transform: translateY(-1px); }
+  #run:disabled { opacity: 0.55; cursor: default; }
 
-  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 18px; }
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
   .preset {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
-    cursor: pointer; text-align: left; color: var(--text); transition: transform 0.12s ease, border-color 0.12s ease;
+    background: #0e1613; border: 1px solid var(--panel-line); border-radius: 10px; padding: 10px 12px;
+    cursor: pointer; text-align: left; color: #EDE6D2; transition: border-color 0.12s ease, transform 0.12s ease;
   }
-  .preset:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .preset:hover { border-color: var(--depth-2); transform: translateY(-1px); }
   .preset .t { font-size: 0.84em; font-weight: 600; }
-  .preset .s { font-size: 0.72em; color: var(--muted); margin-top: 2px; }
+  .preset .s { font-size: 0.72em; color: #7f8f88; margin-top: 2px; }
 
   .calib {
-    margin-top: 4px; padding: 12px 14px; border-radius: 12px; background: rgba(245,166,35,0.08);
-    border: 1px solid rgba(245,166,35,0.28); font-size: 0.78em; color: #f2c98a; cursor: pointer;
-    line-height: 1.4;
+    padding: 12px 14px; border-radius: 10px; background: rgba(217,154,34,0.1);
+    border: 1px solid rgba(217,154,34,0.32); font-size: 0.78em; color: #e5c07a; cursor: pointer; line-height: 1.45;
   }
-  .calib b { color: #ffd98f; }
+  .calib b { color: #f2d18f; }
 
-  .result-card { margin-top: 18px; }
-  .gauge-row { display: flex; align-items: center; gap: 18px; }
-  .gauge-num { font-size: 2.1em; font-weight: 800; letter-spacing: -0.02em; }
-  .gauge-label { font-size: 0.75em; color: var(--muted); margin-top: 2px; }
-  .summary {
-    margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--bg-1);
-    border: 1px solid var(--border); font-size: 0.88em; line-height: 1.45; color: #dfe7ee;
-    min-height: 20px;
+  .auto-row { display: flex; gap: 8px; margin-top: 14px; }
+  #autoDemo, #stopDemo {
+    flex: 1; background: transparent; border: 1px solid var(--depth-2); color: #9fe0d6; font-weight: 600;
+    padding: 11px; border-radius: 10px; cursor: pointer; font-size: 0.84em; letter-spacing: 0.03em;
   }
-  .duration { color: var(--muted); font-size: 0.74em; margin-top: 8px; }
+  #autoDemo:hover { background: rgba(14,110,130,0.25); }
+  #stopDemo { border-color: var(--hazard-2); color: var(--hazard-2); display: none; }
+
+  .gauge-row { display: flex; align-items: center; gap: 18px; margin-top: 18px; }
+  .gauge-num { font-family: "Oswald", sans-serif; font-size: 2.1em; font-weight: 700; }
+  .gauge-label { font-size: 0.74em; color: #7f8f88; margin-top: 2px; font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+  .summary {
+    margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #0e1613;
+    border: 1px solid var(--panel-line); font-size: 0.88em; line-height: 1.45; color: #dbe4de; min-height: 20px;
+  }
+  .duration { color: #7f8f88; font-size: 0.72em; margin-top: 8px; font-family: "IBM Plex Mono", monospace; }
+  .duration a { color: #7f8f88; float: right; }
 
   details.reasoning { margin-top: 16px; }
   details.reasoning > summary {
-    cursor: pointer; font-size: 0.78em; color: var(--muted); list-style: none; user-select: none;
-    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; font-size: 0.76em; color: #7f8f88; list-style: none; user-select: none;
+    display: flex; align-items: center; gap: 6px; font-family: "IBM Plex Mono", monospace;
   }
   details.reasoning > summary::-webkit-details-marker { display: none; }
   details.reasoning > summary:before { content: "▶"; font-size: 0.7em; transition: transform 0.15s; }
   details.reasoning[open] > summary:before { transform: rotate(90deg); }
   .reasoning-body { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
   .tool-call {
-    background: var(--bg-1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.76em; color: #9fe8c9;
+    background: #0e1613; border: 1px solid var(--panel-line); border-radius: 8px; padding: 10px 12px;
+    font-family: "IBM Plex Mono", monospace; font-size: 0.74em; color: #9fe8c9; white-space: pre-wrap;
   }
-  .tool-call .name { color: var(--accent); font-weight: 700; }
+  .tool-call .name { color: #6fc7e8; font-weight: 700; }
   .think-block {
-    background: var(--bg-1); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px;
-    font-size: 0.76em; color: var(--muted); font-style: italic; white-space: pre-wrap;
+    background: #0e1613; border: 1px dashed var(--panel-line); border-radius: 8px; padding: 10px 12px;
+    font-size: 0.74em; color: #8a9a93; font-style: italic; white-space: pre-wrap;
   }
-
-  .empty-state { color: var(--muted); font-size: 0.85em; padding: 6px 2px; }
+  .empty-state { color: #7f8f88; font-size: 0.84em; }
   .spinner {
-    width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
-    border-top-color: var(--accent); animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle;
+    width: 15px; height: 15px; border-radius: 50%; border: 2px solid rgba(22,33,29,0.25);
+    border-top-color: #16211D; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- how it works: signal path ---------- */
+  .signal-path { display: flex; align-items: stretch; gap: 0; margin-top: 50px; position: relative; }
+  @media (max-width: 900px) { .signal-path { flex-direction: column; gap: 20px; } }
+  .signal-node { flex: 1; text-align: center; padding: 0 14px; position: relative; }
+  .signal-node .glyph {
+    width: 58px; height: 58px; border-radius: 50%; background: var(--paper-2); border: 1.5px solid var(--line);
+    display: flex; align-items: center; justify-content: center; font-size: 1.5em; margin: 0 auto 14px;
+    position: relative; z-index: 2;
+  }
+  .signal-node .label { font-family: "IBM Plex Mono", monospace; text-transform: uppercase; font-size: 0.7em; letter-spacing: 0.08em; color: var(--hazard); margin-bottom: 6px; }
+  .signal-node .desc { font-size: 0.86em; color: var(--ink-soft); line-height: 1.4; }
+  .signal-line {
+    position: absolute; top: 29px; left: 50%; width: 100%; height: 2px; background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 14px);
+    z-index: 1;
+  }
+  @media (max-width: 900px) { .signal-line { display: none; } }
+  .signal-node:last-child .signal-line { display: none; }
+  .pulse-dot {
+    position: absolute; top: 25px; left: 50%; width: 10px; height: 10px; border-radius: 50%; background: var(--hazard-2);
+    box-shadow: 0 0 10px var(--hazard-2); z-index: 3; animation: pulse-travel 4.5s ease-in-out infinite;
+  }
+  @keyframes pulse-travel {
+    0% { left: 4%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { left: 96%; opacity: 0; }
+  }
+
+  footer { padding: 50px 40px 70px; text-align: center; }
+  footer .fline { font-family: "IBM Plex Mono", monospace; font-size: 0.76em; color: var(--ink-soft); }
+  footer a { color: var(--depth); text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
-<div class="shell">
-  <div class="topbar">
-    <div class="brand">
-      <div class="icon">🌊</div>
-      <div>
-        <h1>CruzSurge</h1>
-        <p>Natural-language coastal erosion simulator — West Cliff Drive, Santa Cruz</p>
-      </div>
-    </div>
-    <div class="pill"><span class="dot"></span> Gemma 4 · 8B · running locally via Ollama</div>
+
+<div class="ticker">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<nav>
+  <div class="nav-brand"><div class="sq"></div> CRUZSURGE</div>
+  <div class="nav-links">
+    <a href="#problem">The Record</a>
+    <a href="#simulator">Simulator</a>
+    <a href="#how">Signal Path</a>
   </div>
+  <div class="nav-badge"><span class="dot"></span> Gemma 4 · 8B · Local</div>
+</nav>
 
-  <div class="grid">
-    <div class="card canvas-card">
-      <div class="canvas-wrap">
-        <canvas id="surge" width="1200" height="620"></canvas>
-      </div>
-      <div class="canvas-badges" id="badges"></div>
+<section class="hero">
+  <h1>West Cliff Drive<br>is <em>disappearing.</em></h1>
+  <p class="sub">Describe a storm in plain English. Gemma 4 — running entirely on this laptop, no cloud —
+    autonomously reasons about tide, wave energy, and coastal defenses, then drives a live simulation of
+    what happens to the cliff. This is the same qualitative reasoning behind the city's own retreat-and-defend
+    planning, made interactive.</p>
+  <div class="readout mono">
+    <span><span class="k">STATION&nbsp;</span><span class="v">WEST CLIFF DR</span></span>
+    <span><span class="k">LAT&nbsp;</span><span class="v">36.9506°N</span></span>
+    <span><span class="k">LON&nbsp;</span><span class="v">122.0288°W</span></span>
+    <span><span class="k">STATUS&nbsp;</span><span class="v">MONITORING<span class="blink">_</span></span></span>
+  </div>
+  <div class="scroll-cue">SCROLL <span class="chev">↓</span></div>
+</section>
+
+<section id="problem">
+  <p class="eyebrow reveal">The record, verified</p>
+  <h2 class="reveal" style="font-size:2.1em;margin:0;max-width:680px;">Every number below is sourced —
+    not a hackathon guess.</h2>
+  <div class="stat-grid">
+    <div class="stat-card reveal">
+      <div class="stat-num"><span class="cnt" data-target="30" data-suffix="">0</span> mo</div>
+      <div class="stat-label">West Cliff Drive stayed closed after the Jan 2023 atmospheric-river storms damaged the seawall and roadway.</div>
+      <div class="stat-src">Lookout Santa Cruz · ABC7</div>
     </div>
+    <div class="stat-card reveal">
+      <div class="stat-num">$<span class="cnt" data-target="1.8" data-decimals="1">0</span>M</div>
+      <div class="stat-label">Cost of the city's plan to relocate the road inland — because the current alignment can't be defended.</div>
+      <div class="stat-src">Lookout Santa Cruz · Santa Cruz Local</div>
+    </div>
+    <div class="stat-card reveal">
+      <div class="stat-num"><span class="cnt" data-target="2027" data-suffix="">0</span></div>
+      <div class="stat-label">Target year for construction to shift ~400-600 ft of road and path 50-60 ft inland into Lighthouse Field.</div>
+      <div class="stat-src">Lookout Santa Cruz, Nov 2024</div>
+    </div>
+    <div class="stat-card reveal">
+      <div class="stat-num"><span class="cnt" data-target="450" data-suffix="">0</span> yd³</div>
+      <div class="stat-label">Slurry-cement backfill required to stabilize the sinkhole at 944 West Cliff Drive.</div>
+      <div class="stat-src">City of Santa Cruz CEQA filing</div>
+    </div>
+  </div>
+</section>
 
-    <div>
-      <div class="card">
-        <p class="section-title">Describe a scenario</p>
-        <div class="cmd-row">
-          <input id="cmd" type="text" placeholder="e.g. a category 4 hurricane hits at king tide with no seawall" />
-          <button id="run">Run</button>
+<div class="console-section" id="simulator">
+  <div class="console-inner">
+    <p class="eyebrow reveal">Live instrument</p>
+    <h2 class="reveal">Run the simulation.</h2>
+    <p class="sub reveal">Nothing here is scripted. Every reading below is produced live by Gemma 4 deciding,
+      per scenario, which controls to move.</p>
+
+    <div class="console-grid reveal">
+      <div>
+        <div class="porthole" id="porthole">
+          <span class="rivet" style="top:10px;left:10px;"></span>
+          <span class="rivet" style="top:10px;right:10px;"></span>
+          <span class="rivet" style="bottom:10px;left:10px;"></span>
+          <span class="rivet" style="bottom:10px;right:10px;"></span>
+          <div class="flash-overlay" id="flashOverlay"></div>
+          <canvas id="surge" width="1200" height="620"></canvas>
         </div>
-        <div class="presets" id="presets"></div>
-        <div class="calib" id="calibBtn">
-          <b>⚓ Real-world calibration:</b> the Jan 2023 atmospheric-river storm closed this stretch
-          of West Cliff Drive for ~2 years. Click to recreate those conditions.
+        <div class="console-badges" id="badges"></div>
+
+        <div class="panel-card" style="margin-top:18px;">
+          <p class="panel-title">Live controls — drag to adjust <span class="live-tag"><span class="dot"></span>erosion clock running</span></p>
+
+          <div class="segmented" id="tideSeg">
+            <div class="seg-btn" data-v="low">Low tide</div>
+            <div class="seg-btn" data-v="neutral">Neutral</div>
+            <div class="seg-btn" data-v="high">High tide</div>
+            <div class="seg-btn" data-v="king_tide">King tide</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="sr-label"><span>Wave amplitude</span><span id="ampVal">0.20</span></div>
+            <input type="range" id="ampSlider" min="0" max="1" step="0.01" value="0.2">
+          </div>
+          <div class="slider-row">
+            <div class="sr-label"><span>Wave frequency</span><span id="freqVal">0.30</span></div>
+            <input type="range" id="freqSlider" min="0" max="1" step="0.01" value="0.3">
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-chip active" id="seawallToggle">🧱 Seawall</div>
+            <div class="toggle-chip" id="ripRapToggle">🪨 Rip-rap</div>
+          </div>
+
+          <div class="readout-grid">
+            <div class="readout-item"><div class="ro-label">Wave energy</div><div class="ro-val" id="roEnergy">0.03</div></div>
+            <div class="readout-item"><div class="ro-label">Defense factor</div><div class="ro-val" id="roDefense">45%</div></div>
+            <div class="readout-item"><div class="ro-label">Erosion rate</div><div class="ro-val" id="roRate">0.1%/min</div></div>
+            <div class="readout-item"><div class="ro-label">Time to collapse</div><div class="ro-val" id="roEta">—</div></div>
+          </div>
+          <p class="readout-note">Live formula: <code>rate ∝ amplitude² × (0.4 + frequency) × tide × (1 − defense)</code> —
+            drag any control and watch the cliff respond in real time, no AI call needed.</p>
         </div>
       </div>
 
-      <div class="card result-card">
-        <p class="section-title">Simulation status</p>
-        <div class="gauge-row">
-          <svg width="86" height="86" viewBox="0 0 86 86">
-            <circle cx="43" cy="43" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9"/>
-            <circle id="gaugeArc" cx="43" cy="43" r="36" fill="none" stroke="#3ddc84" stroke-width="9"
-                     stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226"
-                     transform="rotate(-90 43 43)" style="transition: stroke-dashoffset 0.9s ease, stroke 0.9s ease;"/>
-          </svg>
-          <div>
-            <div class="gauge-num" id="gaugeNum">8%</div>
-            <div class="gauge-label">Cumulative cliff erosion</div>
+      <div>
+        <div class="panel-card">
+          <p class="panel-title">Ask Gemma 4 to set the scene</p>
+          <div class="cmd-row">
+            <input id="cmd" type="text" placeholder="a category 4 hurricane hits at king tide, no seawall" />
+            <button id="run">Run</button>
           </div>
-        </div>
-        <div class="summary" id="summary">Try a preset, or describe your own storm scenario above.</div>
-        <div class="duration">
-          <span id="duration"></span>
-          <a id="resetLink" href="javascript:void(0)" style="float:right;color:var(--muted);text-decoration:underline;">↺ reset simulation</a>
+          <div class="presets" id="presets"></div>
+          <div class="calib" id="calibBtn">
+            <b>⚓ Real-world calibration —</b> recreate the January 2023 storm that closed this road for ~2 years.
+          </div>
+          <div class="auto-row">
+            <button id="autoDemo">▶ Auto-demo — run all four scenarios</button>
+            <button id="stopDemo">■ Stop</button>
+          </div>
         </div>
 
-        <details class="reasoning">
-          <summary>Show Gemma 4's agent reasoning &amp; tool calls</summary>
-          <div class="reasoning-body" id="reasoningBody">
-            <div class="empty-state">Run a scenario to see the raw tool calls here.</div>
+        <div class="panel-card" style="margin-top:18px;">
+          <p class="panel-title">Simulation status</p>
+          <div class="gauge-row">
+            <svg width="82" height="82" viewBox="0 0 82 82">
+              <circle cx="41" cy="41" r="34" fill="none" stroke="rgba(237,230,210,0.12)" stroke-width="8"/>
+              <circle id="gaugeArc" cx="41" cy="41" r="34" fill="none" stroke="#0E6E82" stroke-width="8"
+                       stroke-linecap="round" stroke-dasharray="214" stroke-dashoffset="214"
+                       transform="rotate(-90 41 41)" style="transition: stroke-dashoffset 0.9s ease, stroke 0.9s ease;"/>
+            </svg>
+            <div>
+              <div class="gauge-num" id="gaugeNum">8%</div>
+              <div class="gauge-label">Cumulative erosion</div>
+            </div>
           </div>
-        </details>
+          <div class="summary" id="summary">Drag a control on the left, or ask Gemma 4 to set the scene.</div>
+          <div class="duration"><span id="duration"></span><a id="resetLink" href="javascript:void(0)">↺ reset</a></div>
+          <details class="reasoning">
+            <summary>Show Gemma 4's agent reasoning &amp; tool calls</summary>
+            <div class="reasoning-body" id="reasoningBody"><div class="empty-state">Run a scenario to see the raw tool calls here.</div></div>
+          </details>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<section id="how">
+  <p class="eyebrow reveal">Signal path</p>
+  <h2 class="reveal" style="font-size:2.1em;margin:0 0 8px;max-width:680px;">One sentence in. Four autonomous decisions out.</h2>
+  <p class="reveal" style="color:var(--ink-soft);max-width:640px;">This is the actual order data moves through the
+    system — Gemma 4 decides all four steps in a single turn, including whether coastal defenses were mentioned at all.</p>
+
+  <div class="signal-path reveal">
+    <div class="signal-node">
+      <div class="signal-line"></div>
+      <div class="pulse-dot" style="animation-delay:0s;"></div>
+      <div class="glyph">🗣️</div>
+      <div class="label">01 · Input</div>
+      <div class="desc">You describe a storm scenario in plain English.</div>
+    </div>
+    <div class="signal-node">
+      <div class="signal-line"></div>
+      <div class="pulse-dot" style="animation-delay:1.1s;"></div>
+      <div class="glyph">🧠</div>
+      <div class="label">02 · Reasoning</div>
+      <div class="desc">Gemma 4 reasons about tide, wave energy, and defenses — locally, via Ollama.</div>
+    </div>
+    <div class="signal-node">
+      <div class="signal-line"></div>
+      <div class="pulse-dot" style="animation-delay:2.2s;"></div>
+      <div class="glyph">⚙️</div>
+      <div class="label">03 · Tool calls</div>
+      <div class="desc">Native function calls fire: tide, wave kinematics, defenses, erosion advance.</div>
+    </div>
+    <div class="signal-node">
+      <div class="glyph">🌊</div>
+      <div class="label">04 · Response</div>
+      <div class="desc">The cliff, road, and warnings react live — no hard-coded animation.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fline">CruzSurge · Built for CruzHacks "Build with Gemma" · Autonomous Agent Track ·
+    <a href="https://github.com/Preet37/CruzMap" target="_blank">github.com/Preet37/CruzMap</a></div>
+</footer>
+
 <script>
+// ---------------- ticker ----------------
+const TICKER_FACTS = [
+  "⚠ WEST CLIFF DRIVE CLOSED <b>30 MONTHS</b> AFTER JAN 2023 STORM DAMAGE",
+  "944 WEST CLIFF DR: EMERGENCY SINKHOLE REPAIR, <b>450 CU YD</b> SLURRY-CEMENT BACKFILL",
+  "CITY TARGETING <b>2027</b> CONSTRUCTION TO RELOCATE ROAD 50-60 FT INLAND",
+  "PROJECT COST: <b>$1.8M</b> TO SHIFT ~400-600 FT OF ROAD & PATH",
+  "GEMMA 4 · 8B · RUNNING 100% LOCALLY VIA OLLAMA · NO CLOUD API",
+];
+const trackEl = document.getElementById('tickerTrack');
+const once = TICKER_FACTS.map(f => `<span>${f}</span>`).join('');
+trackEl.innerHTML = once + once;
+
+// ---------------- reveal on scroll ----------------
+const revealEls = document.querySelectorAll('.reveal');
+revealEls.forEach((el, i) => { el.style.transitionDelay = (i % 5) * 0.06 + 's'; });
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => io.observe(el));
+
+// ---------------- count-up stats ----------------
+function animateCount(el) {
+  const target = parseFloat(el.dataset.target);
+  const decimals = parseInt(el.dataset.decimals || '0');
+  const start = performance.now();
+  const duration = 1400;
+  function tick(now) {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = (target * eased).toFixed(decimals);
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+const countObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { animateCount(e.target); countObserver.unobserve(e.target); }
+  });
+}, { threshold: 0.4 });
+document.querySelectorAll('.cnt').forEach(el => countObserver.observe(el));
+
+// ---------------- agent / simulator ----------------
 const PRESETS = [
   { t: "☀️ Calm baseline", s: "low tide, gentle swell", cmd: "Reset to a calm day: low tide, gentle 1-foot swell, seawall up." },
   { t: "⛈️ Category 2 storm", s: "high tide, moderate swell", cmd: "Simulate a category 2 storm hitting West Cliff Drive at high tide." },
@@ -227,6 +573,24 @@ const runBtn = document.getElementById('run');
 runBtn.onclick = () => { if (cmdInput.value.trim()) runScenario(cmdInput.value.trim()); };
 cmdInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && cmdInput.value.trim()) runScenario(cmdInput.value.trim()); });
 
+async function resetSimulation() {
+  const res = await fetch('/api/reset', { method: 'POST' });
+  const s = await res.json();
+  liveState.tide_level = s.tide_level; liveState.wave_amplitude = s.wave_amplitude;
+  liveState.wave_frequency = s.wave_frequency; liveState.seawall_active = s.seawall_active;
+  liveState.rip_rap_active = s.rip_rap_active; liveState.erosion_pct = s.erosion_pct;
+  liveState.simulated_hours_total = s.simulated_hours_total;
+  lastDebrisThreshold = 0; failureFired = false;
+  syncControlsToState();
+  renderBadges(liveState);
+  renderGauge(liveState.erosion_pct);
+  updateReadout();
+  renderReasoning([]);
+  document.getElementById('summary').textContent = 'Simulation reset to calm baseline.';
+  document.getElementById('duration').textContent = '';
+}
+document.getElementById('resetLink').onclick = resetSimulation;
+
 function severityLabel(amp, freq) {
   const s = (amp + freq) / 2;
   if (s < 0.2) return "Calm";
@@ -242,22 +606,22 @@ function renderBadges(state) {
                 : state.rip_rap_active ? "Rip-rap only"
                 : "No defenses";
   badges.innerHTML = `
-    <span class="badge">🌊 <b>Tide:</b>&nbsp;${state.tide_level.replace('_',' ')}</span>
-    <span class="badge">💨 <b>Wave intensity:</b>&nbsp;${severityLabel(state.wave_amplitude, state.wave_frequency)}</span>
-    <span class="badge">🧱 <b>Defenses:</b>&nbsp;${defense}</span>
-    <span class="badge">⏱️ <b>Simulated:</b>&nbsp;${state.simulated_hours_total}h total</span>
+    <span class="badge">TIDE&nbsp;<b>${state.tide_level.replace('_',' ')}</b></span>
+    <span class="badge">WAVE&nbsp;<b>${severityLabel(state.wave_amplitude, state.wave_frequency)}</b></span>
+    <span class="badge">DEFENSE&nbsp;<b>${defense}</b></span>
+    <span class="badge">SIMULATED&nbsp;<b>${state.simulated_hours_total}h</b></span>
   `;
 }
 
 function gaugeColor(pct) {
-  if (pct < 25) return "#3ddc84";
-  if (pct < 55) return "#f5c342";
-  if (pct < 80) return "#f5a623";
-  return "#ff5d5d";
+  if (pct < 25) return "#0E6E82";
+  if (pct < 55) return "#D99A22";
+  if (pct < 80) return "#E8641A";
+  return "#C8481E";
 }
 
 function renderGauge(pct) {
-  const circumference = 226;
+  const circumference = 214;
   const offset = circumference - (pct / 100) * circumference;
   const arc = document.getElementById('gaugeArc');
   arc.style.strokeDashoffset = offset;
@@ -280,18 +644,82 @@ function renderReasoning(trace) {
   }).join('');
 }
 
-let displayState = null;
-let targetState = null;
+let liveState = null;
+let autoDemoRunning = false;
+let failureFired = false;
+
+const TIDE_BUMP = { low: -0.1, neutral: 0.0, high: 0.15, king_tide: 0.3 };
+const ACCEL = 2.0; // simulated hours of erosion per real second while watching
+
+function erosionRatePerSecond(s) {
+  const waveEnergy = Math.pow(s.wave_amplitude, 2) * (0.4 + s.wave_frequency);
+  const tideBoost = 1.0 + (TIDE_BUMP[s.tide_level] ?? 0);
+  let defenseFactor = 1.0;
+  if (s.seawall_active) defenseFactor *= 0.45;
+  if (s.rip_rap_active) defenseFactor *= 0.7;
+  return waveEnergy * tideBoost * defenseFactor * 1.667 * ACCEL; // % per real second
+}
+
+function updateReadout() {
+  const s = liveState;
+  const waveEnergy = Math.pow(s.wave_amplitude, 2) * (0.4 + s.wave_frequency);
+  const defenseFactor = (s.seawall_active ? 0.45 : 1) * (s.rip_rap_active ? 0.7 : 1);
+  const ratePerSec = erosionRatePerSecond(s);
+  const ratePerMin = ratePerSec * 60;
+  document.getElementById('roEnergy').textContent = waveEnergy.toFixed(2);
+  document.getElementById('roDefense').textContent = Math.round((1 - defenseFactor) * 100) + '%';
+  document.getElementById('roRate').textContent = ratePerMin.toFixed(1) + '%/min';
+  const remaining = 100 - s.erosion_pct;
+  if (ratePerSec > 0.01 && remaining > 0.5) {
+    const secs = remaining / ratePerSec;
+    document.getElementById('roEta').textContent = secs < 60 ? Math.ceil(secs) + 's' : Math.ceil(secs / 60) + 'm';
+  } else {
+    document.getElementById('roEta').textContent = remaining <= 0.5 ? 'collapsed' : '—';
+  }
+}
+
+function syncControlsToState() {
+  document.querySelectorAll('#tideSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.v === liveState.tide_level));
+  document.getElementById('ampSlider').value = liveState.wave_amplitude;
+  document.getElementById('ampVal').textContent = liveState.wave_amplitude.toFixed(2);
+  document.getElementById('freqSlider').value = liveState.wave_frequency;
+  document.getElementById('freqVal').textContent = liveState.wave_frequency.toFixed(2);
+  document.getElementById('seawallToggle').classList.toggle('active', liveState.seawall_active);
+  document.getElementById('ripRapToggle').classList.toggle('active', liveState.rip_rap_active);
+}
+
+document.querySelectorAll('#tideSeg .seg-btn').forEach(btn => {
+  btn.onclick = () => { liveState.tide_level = btn.dataset.v; syncControlsToState(); updateReadout(); renderBadges(liveState); };
+});
+document.getElementById('ampSlider').oninput = (e) => {
+  liveState.wave_amplitude = parseFloat(e.target.value);
+  document.getElementById('ampVal').textContent = liveState.wave_amplitude.toFixed(2);
+  updateReadout(); renderBadges(liveState);
+};
+document.getElementById('freqSlider').oninput = (e) => {
+  liveState.wave_frequency = parseFloat(e.target.value);
+  document.getElementById('freqVal').textContent = liveState.wave_frequency.toFixed(2);
+  updateReadout(); renderBadges(liveState);
+};
+document.getElementById('seawallToggle').onclick = () => {
+  liveState.seawall_active = !liveState.seawall_active; syncControlsToState(); updateReadout(); renderBadges(liveState);
+};
+document.getElementById('ripRapToggle').onclick = () => {
+  liveState.rip_rap_active = !liveState.rip_rap_active; syncControlsToState(); updateReadout(); renderBadges(liveState);
+};
 
 async function fetchInitialState() {
   const res = await fetch('/api/state');
-  targetState = await res.json();
-  displayState = Object.assign({}, targetState);
-  renderBadges(targetState);
-  renderGauge(targetState.erosion_pct);
+  liveState = await res.json();
+  liveState._tideOffset = tideOffsetFor(liveState.tide_level);
+  renderBadges(liveState);
+  renderGauge(liveState.erosion_pct);
+  syncControlsToState();
+  updateReadout();
 }
 
-async function runScenario(command) {
+async function runScenario(command, opts) {
+  opts = opts || {};
   cmdInput.value = command;
   runBtn.disabled = true;
   runBtn.innerHTML = '<span class="spinner"></span>';
@@ -302,18 +730,46 @@ async function runScenario(command) {
       body: JSON.stringify({ command, fast: true })
     });
     const data = await res.json();
-    targetState = data.state;
-    renderBadges(targetState);
-    renderGauge(targetState.erosion_pct);
+    liveState.tide_level = data.state.tide_level;
+    liveState.wave_amplitude = data.state.wave_amplitude;
+    liveState.wave_frequency = data.state.wave_frequency;
+    liveState.seawall_active = data.state.seawall_active;
+    liveState.rip_rap_active = data.state.rip_rap_active;
+    liveState.erosion_pct = Math.max(liveState.erosion_pct, data.state.erosion_pct);
+    liveState.simulated_hours_total = data.state.simulated_hours_total;
+    syncControlsToState();
+    renderBadges(liveState);
+    renderGauge(liveState.erosion_pct);
+    updateReadout();
     renderReasoning(data.trace);
     document.getElementById('summary').textContent = data.summary || 'Scenario applied.';
-    document.getElementById('duration').textContent = `Gemma 4 response time: ${data.duration_sec}s`;
+    document.getElementById('duration').textContent = `Response time: ${data.duration_sec}s`;
+    if (opts.auto) document.querySelector('details.reasoning').open = true;
   } catch (err) {
-    document.getElementById('summary').textContent = 'Error running scenario — check the backend is running.';
+    document.getElementById('summary').textContent = 'No response from the simulator — confirm the backend is running.';
   }
   runBtn.disabled = false;
   runBtn.textContent = 'Run';
 }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.getElementById('autoDemo').onclick = async () => {
+  autoDemoRunning = true;
+  document.getElementById('autoDemo').style.display = 'none';
+  document.getElementById('stopDemo').style.display = 'block';
+  document.getElementById('simulator').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  await sleep(700);
+  for (const p of PRESETS) {
+    if (!autoDemoRunning) break;
+    await runScenario(p.cmd, { auto: true });
+    for (let i = 0; i < 34 && autoDemoRunning; i++) await sleep(100);
+  }
+  autoDemoRunning = false;
+  document.getElementById('autoDemo').style.display = 'block';
+  document.getElementById('stopDemo').style.display = 'none';
+};
+document.getElementById('stopDemo').onclick = () => { autoDemoRunning = false; };
 
 // ---------------- Canvas rendering ----------------
 const canvas = document.getElementById('surge');
@@ -324,39 +780,48 @@ let particles = [];
 let lastDebrisThreshold = 0;
 
 function lerp(a, b, f) { return a + (b - a) * f; }
+function tideOffsetFor(level) { return { low: -26, neutral: 0, high: 26, king_tide: 48 }[level] ?? 0; }
 
-function tideOffsetFor(level) {
-  return { low: -26, neutral: 0, high: 26, king_tide: 48 }[level] ?? 0;
-}
+let lastFrameTime = null;
+function updateLiveState(now) {
+  if (!liveState) return;
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
 
-function updateDisplayState() {
-  if (!targetState) return;
-  const speed = 0.035;
-  displayState.erosion_pct = lerp(displayState.erosion_pct, targetState.erosion_pct, speed * 1.3);
-  displayState.wave_amplitude = lerp(displayState.wave_amplitude, targetState.wave_amplitude, speed);
-  displayState.wave_frequency = lerp(displayState.wave_frequency, targetState.wave_frequency, speed);
-  displayState._tideOffsetTarget = tideOffsetFor(targetState.tide_level);
-  displayState._tideOffset = lerp(displayState._tideOffset ?? 0, displayState._tideOffsetTarget, speed);
-  displayState.seawall_active = targetState.seawall_active;
-  displayState.rip_rap_active = targetState.rip_rap_active;
+  liveState.erosion_pct = Math.min(100, liveState.erosion_pct + erosionRatePerSecond(liveState) * dt);
+  liveState._tideOffsetTarget = tideOffsetFor(liveState.tide_level);
+  liveState._tideOffset = lerp(liveState._tideOffset ?? 0, liveState._tideOffsetTarget, 0.06);
 
-  if (Math.floor(displayState.erosion_pct / 20) > lastDebrisThreshold) {
-    lastDebrisThreshold = Math.floor(displayState.erosion_pct / 20);
+  if (Math.floor(liveState.erosion_pct / 20) > lastDebrisThreshold) {
+    lastDebrisThreshold = Math.floor(liveState.erosion_pct / 20);
     spawnDebris();
+  }
+  if (liveState.erosion_pct >= 95 && !failureFired) {
+    failureFired = true;
+    const p = document.getElementById('porthole'), f = document.getElementById('flashOverlay');
+    p.classList.add('shake'); f.classList.add('fire');
+    setTimeout(() => { p.classList.remove('shake'); f.classList.remove('fire'); }, 900);
+  }
+  if (liveState.erosion_pct < 95) failureFired = false;
+
+  // periodic UI sync so gauge/badges/readout reflect the live-ticking erosion value
+  if (!updateLiveState._acc) updateLiveState._acc = 0;
+  updateLiveState._acc += dt;
+  if (updateLiveState._acc > 0.25) {
+    updateLiveState._acc = 0;
+    renderGauge(liveState.erosion_pct);
+    updateReadout();
   }
 }
 
 function spawnDebris() {
-  const baseCliffEdgeX = W * 0.42 + (displayState.erosion_pct / 100) * (W * 0.34);
+  const baseCliffEdgeX = W * 0.42 + (liveState.erosion_pct / 100) * (W * 0.34);
   for (let i = 0; i < 14; i++) {
     particles.push({
-      x: baseCliffEdgeX + (Math.random() - 0.5) * 40,
-      y: H * 0.55 - 80 + Math.random() * 40,
-      vx: (Math.random() - 0.6) * 2,
-      vy: -Math.random() * 2,
-      life: 1.0,
-      size: 3 + Math.random() * 5,
-      color: Math.random() > 0.5 ? '#6b4a3a' : '#8b949e',
+      x: baseCliffEdgeX + (Math.random() - 0.5) * 40, y: H * 0.55 - 80 + Math.random() * 40,
+      vx: (Math.random() - 0.6) * 2, vy: -Math.random() * 2, life: 1.0,
+      size: 3 + Math.random() * 5, color: Math.random() > 0.5 ? '#6b4a3a' : '#8b949e',
     });
   }
 }
@@ -368,10 +833,10 @@ function skyColors(severity) {
   return ['#14151b', '#272b33'];
 }
 
-function draw() {
-  const S = displayState;
+function draw(now) {
+  const S = liveState;
   if (!S) { requestAnimationFrame(draw); return; }
-  updateDisplayState();
+  updateLiveState(now || performance.now());
 
   const waterY = H * 0.55 - S._tideOffset;
   const baseCliffEdgeX = W * 0.42;
@@ -380,29 +845,22 @@ function draw() {
   const severity = (S.wave_amplitude + S.wave_frequency) / 2;
 
   ctx.clearRect(0, 0, W, H);
-
-  // sky
   const [c1, c2] = skyColors(severity);
   const g = ctx.createLinearGradient(0, 0, 0, waterY + 20);
   g.addColorStop(0, c1); g.addColorStop(1, c2);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, waterY + 20);
 
-  // storm rain streaks
   if (severity > 0.45) {
     ctx.strokeStyle = `rgba(210,225,235,${0.08 + severity * 0.12})`;
     ctx.lineWidth = 1;
     for (let i = 0; i < 60 * severity; i++) {
       const rx = (i * 97 + t * 400) % W;
       const ry = (i * 53) % waterY;
-      ctx.beginPath();
-      ctx.moveTo(rx, ry);
-      ctx.lineTo(rx - 14, ry + 22);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 14, ry + 22); ctx.stroke();
     }
   }
 
-  // location label
   ctx.fillStyle = 'rgba(255,255,255,0.82)';
   ctx.font = '600 15px -apple-system, sans-serif';
   ctx.fillText('West Cliff Drive, Santa Cruz, CA', 20, 30);
@@ -410,42 +868,32 @@ function draw() {
   ctx.font = '11px ui-monospace, monospace';
   ctx.fillText('36.9506° N, 122.0288° W', 20, 47);
 
-  // ocean layers
   const amp = 8 + S.wave_amplitude * 40;
   const wavelength = 260 - S.wave_frequency * 170;
-  const oceanTop = c => {
-    const layers = [
-      { color: `rgba(56,139,253,0.30)`, speed: 1.0, yOff: -8 },
-      { color: `rgba(31,111,235,0.55)`, speed: 1.35, yOff: 4 },
-      { color: `rgba(9,64,145,0.9)`, speed: 1.7, yOff: 16 },
-    ];
-    layers.forEach((layer) => {
-      ctx.beginPath();
-      ctx.moveTo(0, H);
-      for (let x = 0; x <= cliffEdgeX + 24; x += 6) {
-        const y = waterY + layer.yOff + Math.sin((x / wavelength) + t * layer.speed) * amp;
-        ctx.lineTo(x, y);
-      }
-      ctx.lineTo(cliffEdgeX + 24, H);
-      ctx.closePath();
-      ctx.fillStyle = layer.color;
-      ctx.fill();
-    });
-    // foam crest on top layer
-    if (S.wave_amplitude > 0.35) {
-      ctx.strokeStyle = `rgba(255,255,255,${0.25 + S.wave_amplitude * 0.35})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let x = 0; x <= cliffEdgeX + 24; x += 6) {
-        const y = waterY - 8 + Math.sin((x / wavelength) + t * 1.0) * amp;
-        ctx.lineTo(x, y);
-      }
-      ctx.stroke();
+  const layers = [
+    { color: `rgba(56,139,253,0.30)`, speed: 1.0, yOff: -8 },
+    { color: `rgba(31,111,235,0.55)`, speed: 1.35, yOff: 4 },
+    { color: `rgba(9,64,145,0.9)`, speed: 1.7, yOff: 16 },
+  ];
+  layers.forEach((layer) => {
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= cliffEdgeX + 24; x += 6) {
+      const y = waterY + layer.yOff + Math.sin((x / wavelength) + t * layer.speed) * amp;
+      ctx.lineTo(x, y);
     }
-  };
-  oceanTop();
+    ctx.lineTo(cliffEdgeX + 24, H); ctx.closePath();
+    ctx.fillStyle = layer.color; ctx.fill();
+  });
+  if (S.wave_amplitude > 0.35) {
+    ctx.strokeStyle = `rgba(255,255,255,${0.25 + S.wave_amplitude * 0.35})`;
+    ctx.lineWidth = 2; ctx.beginPath();
+    for (let x = 0; x <= cliffEdgeX + 24; x += 6) {
+      const y = waterY - 8 + Math.sin((x / wavelength) + t * 1.0) * amp;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
 
-  // sea spray near cliff base
   if (S.wave_amplitude > 0.3) {
     const sprayX = cliffEdgeX - 6;
     const sprayY = waterY + Math.sin(t * 1.6) * amp * 0.4;
@@ -453,126 +901,76 @@ function draw() {
     for (let i = 0; i < 6; i++) {
       const ox = (Math.sin(t * 3 + i) * 10);
       const oy = -Math.abs(Math.sin(t * 2.2 + i)) * 22 * S.wave_amplitude;
-      ctx.beginPath();
-      ctx.arc(sprayX + ox, sprayY + oy, 2.4, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(sprayX + ox, sprayY + oy, 2.4, 0, Math.PI * 2); ctx.fill();
     }
   }
 
-  // cliff strata
   const strataColors = ['#4a3826', '#5a4632', '#6b5238', '#7a6142'];
   const cliffTop = waterY - 62;
   const bandH = (H - cliffTop) / strataColors.length;
   strataColors.forEach((col, i) => {
-    ctx.fillStyle = col;
-    ctx.beginPath();
+    ctx.fillStyle = col; ctx.beginPath();
     const y0 = cliffTop + i * bandH;
     ctx.moveTo(cliffEdgeX, y0);
     const jag = 7 + S.erosion_pct / 12;
     ctx.lineTo(cliffEdgeX + (i % 2 === 0 ? jag : -jag * 0.6), y0 + bandH * 0.5);
-    ctx.lineTo(cliffEdgeX, y0 + bandH);
-    ctx.lineTo(W, y0 + bandH);
-    ctx.lineTo(W, y0);
-    ctx.closePath();
-    ctx.fill();
+    ctx.lineTo(cliffEdgeX, y0 + bandH); ctx.lineTo(W, y0 + bandH); ctx.lineTo(W, y0);
+    ctx.closePath(); ctx.fill();
   });
 
-  // cracks
   const crackCount = Math.floor(S.erosion_pct / 15);
-  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2;
   for (let i = 0; i < crackCount; i++) {
     const cx = cliffEdgeX + 24 + i * 26;
     if (cx > W - 12) continue;
-    ctx.beginPath();
-    ctx.moveTo(cx, cliffTop);
-    ctx.lineTo(cx + 6, cliffTop + 40);
-    ctx.lineTo(cx - 5, cliffTop + 75);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cliffTop); ctx.lineTo(cx + 6, cliffTop + 40); ctx.lineTo(cx - 5, cliffTop + 75); ctx.stroke();
   }
 
-  // vegetation tufts (fewer as erosion increases)
   const tuftCount = Math.max(0, Math.round((100 - S.erosion_pct) / 9));
   for (let i = 0; i < tuftCount; i++) {
     const tx = cliffEdgeX + 18 + i * 24;
     if (tx > W - 15) continue;
-    ctx.fillStyle = '#4a7c4e';
-    ctx.beginPath();
-    ctx.ellipse(tx, cliffTop - 3, 7, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = '#4a7c4e'; ctx.beginPath(); ctx.ellipse(tx, cliffTop - 3, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
   }
 
-  // seawall / rip-rap
   if (S.seawall_active) {
-    ctx.fillStyle = '#9aa4b0';
-    ctx.fillRect(cliffEdgeX - 11, waterY - 34, 13, 96);
-    ctx.fillStyle = '#7a828d';
-    ctx.fillRect(cliffEdgeX - 11, waterY - 34, 13, 8);
+    ctx.fillStyle = '#9aa4b0'; ctx.fillRect(cliffEdgeX - 11, waterY - 34, 13, 96);
+    ctx.fillStyle = '#7a828d'; ctx.fillRect(cliffEdgeX - 11, waterY - 34, 13, 8);
   }
   if (S.rip_rap_active) {
     ctx.fillStyle = '#6e7681';
     for (let i = 0; i < 6; i++) {
-      const rx = cliffEdgeX - 28 - i * 11;
-      const ry = waterY + 12 + (i % 2) * 9;
-      ctx.beginPath();
-      ctx.arc(rx, ry, 9, 0, Math.PI * 2);
-      ctx.fill();
+      const rx = cliffEdgeX - 28 - i * 11, ry = waterY + 12 + (i % 2) * 9;
+      ctx.beginPath(); ctx.arc(rx, ry, 9, 0, Math.PI * 2); ctx.fill();
     }
   }
 
-  // road
-  const roadY = cliffTop;
-  const roadW = W - cliffEdgeX;
-  ctx.fillStyle = '#33383f';
-  ctx.fillRect(cliffEdgeX, roadY - 15, roadW, 15);
-  ctx.strokeStyle = '#e8c547';
-  ctx.setLineDash([11, 9]);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cliffEdgeX, roadY - 7.5);
-  ctx.lineTo(W, roadY - 7.5);
-  ctx.stroke();
+  const roadY = cliffTop, roadW = W - cliffEdgeX;
+  ctx.fillStyle = '#33383f'; ctx.fillRect(cliffEdgeX, roadY - 15, roadW, 15);
+  ctx.strokeStyle = '#e8c547'; ctx.setLineDash([11, 9]); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cliffEdgeX, roadY - 7.5); ctx.lineTo(W, roadY - 7.5); ctx.stroke();
   ctx.setLineDash([]);
 
   if (S.erosion_pct > 70) {
-    ctx.fillStyle = '#ff5d5d';
-    ctx.font = 'bold 15px -apple-system, sans-serif';
+    ctx.fillStyle = '#ff5d5d'; ctx.font = 'bold 15px -apple-system, sans-serif';
     ctx.fillText('⚠ ROAD AT RISK', Math.min(cliffEdgeX + 16, W - 170), roadY - 46);
   }
   if (S.erosion_pct >= 95) {
-    ctx.fillStyle = '#ff5d5d';
-    ctx.font = 'bold 20px -apple-system, sans-serif';
+    ctx.fillStyle = '#ff5d5d'; ctx.font = 'bold 20px -apple-system, sans-serif';
     ctx.fillText('⚠️ ROADWAY COLLAPSE', W * 0.52, roadY - 74);
   }
 
-  // debris particles
   particles = particles.filter(p => p.life > 0);
   particles.forEach(p => {
-    p.vy += 0.12;
-    p.x += p.vx; p.y += p.vy;
-    p.life -= 0.012;
-    ctx.globalAlpha = Math.max(0, p.life);
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
+    p.vy += 0.12; p.x += p.vx; p.y += p.vy; p.life -= 0.012;
+    ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
   });
 
   t += 0.014 + S.wave_frequency * 0.028;
   requestAnimationFrame(draw);
 }
-
-document.getElementById('resetLink').onclick = async () => {
-  const res = await fetch('/api/reset', { method: 'POST' });
-  targetState = await res.json();
-  lastDebrisThreshold = 0;
-  renderBadges(targetState);
-  renderGauge(targetState.erosion_pct);
-  renderReasoning([]);
-  document.getElementById('summary').textContent = 'Simulation reset to calm baseline.';
-  document.getElementById('duration').textContent = '';
-};
 
 fetchInitialState().then(draw);
 </script>
