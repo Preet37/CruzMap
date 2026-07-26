@@ -64,12 +64,17 @@ toggle lets you re-enable Gemma's full chain-of-thought reasoning trace when you
 
 ```
 agent/cruzsurge_agent.py   # Gemma 4 tool-calling agent for the coastal simulator (the core)
-app/canvas.py               # self-contained HTML5 canvas renderer (ocean/cliff/road/seawall)
-app/surge_app.py             # Streamlit dashboard: chat input + live canvas + reasoning trace
+server.py                   # thin Flask API (/api/run, /api/state, /api/reset) around the agent
+web/index.html               # the entire user-facing app: custom UI, canvas renderer, JS client
 agent/cruzguard_agent.py    # earlier prototype: same agent pattern, applied to photo hazard-triage
-app/app.py, app/severity.py # CruzGuard's dashboard (kept as a secondary, working prototype)
+app/                          # CruzGuard's Streamlit dashboard (kept as a secondary, working prototype)
 data/                        # CruzGuard's demo photos/locations (unused by CruzSurge)
 ```
+
+The user-facing app is a single self-contained HTML page — no build step, no framework, no external
+libraries — talking to the Flask backend over `fetch()`. Nothing about the agent's internals (code,
+terminal, raw model output) is ever shown by default; the "Show Gemma 4's agent reasoning & tool
+calls" disclosure is opt-in for anyone who wants to verify the tool calls are real.
 
 ## Running it
 
@@ -77,12 +82,14 @@ Requires [Ollama](https://ollama.com) with `gemma4:latest` pulled locally (`olla
 
 ```bash
 pip install -r requirements.txt
-streamlit run app/surge_app.py
+python3 server.py
+# open http://localhost:8600
 ```
 
-Try the two presets in the sidebar, or type your own scenario — e.g. *"a mild winter storm at low
-tide with the seawall up"* vs *"a catastrophic category 5 hurricane at king tide with no coastal
-defenses, run 72 hours"* — and watch the cliff respond differently.
+Try the four presets, the "real-world calibration" card (recreates the Jan 2023 storm conditions),
+or type your own scenario — e.g. *"a mild winter storm at low tide with the seawall up"* vs *"a
+catastrophic category 5 hurricane at king tide with no coastal defenses, run 72 hours"* — and watch
+the cliff, road, and warning states respond differently in real time.
 
 ## Why Gemma 4
 

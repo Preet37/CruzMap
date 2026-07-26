@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CruzSurge — West Cliff Drive Coastal Simulator</title>
+<style>
+  :root {
+    --bg-0: #090c10;
+    --bg-1: #0f141b;
+    --surface: rgba(255,255,255,0.045);
+    --surface-2: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.09);
+    --text: #e6edf3;
+    --muted: #8b96a3;
+    --accent: #2dd4e8;
+    --accent-2: #7c8cff;
+    --danger: #ff5d5d;
+    --warn: #f5a623;
+    --ok: #3ddc84;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: radial-gradient(1200px 800px at 15% -10%, #142130 0%, var(--bg-0) 55%), var(--bg-0);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  ::selection { background: rgba(45,212,232,0.3); }
+
+  .shell { max-width: 1360px; margin: 0 auto; padding: 28px 32px 60px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand .icon {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    box-shadow: 0 6px 22px rgba(45,212,232,0.25);
+  }
+  .brand h1 { margin: 0; font-size: 1.55em; letter-spacing: -0.02em; }
+  .brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.86em; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 7px 14px; border-radius: 999px; font-size: 0.8em; color: var(--muted);
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+  .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+
+  .canvas-card { padding: 0; overflow: hidden; position: relative; }
+  .canvas-wrap { position: relative; }
+  canvas { display: block; width: 100%; height: auto; }
+  .canvas-badges {
+    display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.18);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--border); font-size: 0.8em; color: var(--text);
+  }
+  .badge b { color: var(--muted); font-weight: 500; }
+
+  .section-title { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 12px; }
+
+  .cmd-row { display: flex; gap: 8px; }
+  #cmd {
+    flex: 1; background: var(--bg-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 13px 14px; color: var(--text); font-size: 0.95em; outline: none;
+  }
+  #cmd:focus { border-color: var(--accent); }
+  #run {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; color: #04141a;
+    font-weight: 700; padding: 0 20px; border-radius: 12px; cursor: pointer; font-size: 0.95em;
+  }
+  #run:disabled { opacity: 0.5; cursor: default; }
+
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 18px; }
+  .preset {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+    cursor: pointer; text-align: left; color: var(--text); transition: transform 0.12s ease, border-color 0.12s ease;
+  }
+  .preset:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .preset .t { font-size: 0.84em; font-weight: 600; }
+  .preset .s { font-size: 0.72em; color: var(--muted); margin-top: 2px; }
+
+  .calib {
+    margin-top: 4px; padding: 12px 14px; border-radius: 12px; background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.28); font-size: 0.78em; color: #f2c98a; cursor: pointer;
+    line-height: 1.4;
+  }
+  .calib b { color: #ffd98f; }
+
+  .result-card { margin-top: 18px; }
+  .gauge-row { display: flex; align-items: center; gap: 18px; }
+  .gauge-num { font-size: 2.1em; font-weight: 800; letter-spacing: -0.02em; }
+  .gauge-label { font-size: 0.75em; color: var(--muted); margin-top: 2px; }
+  .summary {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--bg-1);
+    border: 1px solid var(--border); font-size: 0.88em; line-height: 1.45; color: #dfe7ee;
+    min-height: 20px;
+  }
+  .duration { color: var(--muted); font-size: 0.74em; margin-top: 8px; }
+
+  details.reasoning { margin-top: 16px; }
+  details.reasoning > summary {
+    cursor: pointer; font-size: 0.78em; color: var(--muted); list-style: none; user-select: none;
+    display: flex; align-items: center; gap: 6px;
+  }
+  details.reasoning > summary::-webkit-details-marker { display: none; }
+  details.reasoning > summary:before { content: "▶"; font-size: 0.7em; transition: transform 0.15s; }
+  details.reasoning[open] > summary:before { transform: rotate(90deg); }
+  .reasoning-body { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .tool-call {
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.76em; color: #9fe8c9;
+  }
+  .tool-call .name { color: var(--accent); font-weight: 700; }
+  .think-block {
+    background: var(--bg-1); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px;
+    font-size: 0.76em; color: var(--muted); font-style: italic; white-space: pre-wrap;
+  }
+
+  .empty-state { color: var(--muted); font-size: 0.85em; padding: 6px 2px; }
+  .spinner {
+    width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--accent); animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="icon">🌊</div>
+      <div>
+        <h1>CruzSurge</h1>
+        <p>Natural-language coastal erosion simulator — West Cliff Drive, Santa Cruz</p>
+      </div>
+    </div>
+    <div class="pill"><span class="dot"></span> Gemma 4 · 8B · running locally via Ollama</div>
+  </div>
+
+  <div class="grid">
+    <div class="card canvas-card">
+      <div class="canvas-wrap">
+        <canvas id="surge" width="1200" height="620"></canvas>
+      </div>
+      <div class="canvas-badges" id="badges"></div>
+    </div>
+
+    <div>
+      <div class="card">
+        <p class="section-title">Describe a scenario</p>
+        <div class="cmd-row">
+          <input id="cmd" type="text" placeholder="e.g. a category 4 hurricane hits at king tide with no seawall" />
+          <button id="run">Run</button>
+        </div>
+        <div class="presets" id="presets"></div>
+        <div class="calib" id="calibBtn">
+          <b>⚓ Real-world calibration:</b> the Jan 2023 atmospheric-river storm closed this stretch
+          of West Cliff Drive for ~2 years. Click to recreate those conditions.
+        </div>
+      </div>
+
+      <div class="card result-card">
+        <p class="section-title">Simulation status</p>
+        <div class="gauge-row">
+          <svg width="86" height="86" viewBox="0 0 86 86">
+            <circle cx="43" cy="43" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9"/>
+            <circle id="gaugeArc" cx="43" cy="43" r="36" fill="none" stroke="#3ddc84" stroke-width="9"
+                     stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226"
+                     transform="rotate(-90 43 43)" style="transition: stroke-dashoffset 0.9s ease, stroke 0.9s ease;"/>
+          </svg>
+          <div>
+            <div class="gauge-num" id="gaugeNum">8%</div>
+            <div class="gauge-label">Cumulative cliff erosion</div>
+          </div>
+        </div>
+        <div class="summary" id="summary">Try a preset, or describe your own storm scenario above.</div>
+        <div class="duration">
+          <span id="duration"></span>
+          <a id="resetLink" href="javascript:void(0)" style="float:right;color:var(--muted);text-decoration:underline;">↺ reset simulation</a>
+        </div>
+
+        <details class="reasoning">
+          <summary>Show Gemma 4's agent reasoning &amp; tool calls</summary>
+          <div class="reasoning-body" id="reasoningBody">
+            <div class="empty-state">Run a scenario to see the raw tool calls here.</div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRESETS = [
+  { t: "☀️ Calm baseline", s: "low tide, gentle swell", cmd: "Reset to a calm day: low tide, gentle 1-foot swell, seawall up." },
+  { t: "⛈️ Category 2 storm", s: "high tide, moderate swell", cmd: "Simulate a category 2 storm hitting West Cliff Drive at high tide." },
+  { t: "🌊 King tide, no seawall", s: "seawall offline for repairs", cmd: "A king tide is rolling in and the seawall is offline for repairs." },
+  { t: "🌀 Category 5 hurricane", s: "worst case, 72 hrs, no defenses", cmd: "A catastrophic category 5 hurricane makes direct landfall at king tide with no coastal defenses, run it for 72 hours." },
+];
+const CALIBRATION_CMD = "Recreate the January 2023 atmospheric river storm: high tide, severe wave energy, and the seawall failing under the load, run for 48 hours.";
+
+const presetsEl = document.getElementById('presets');
+PRESETS.forEach(p => {
+  const el = document.createElement('div');
+  el.className = 'preset';
+  el.innerHTML = `<div class="t">${p.t}</div><div class="s">${p.s}</div>`;
+  el.onclick = () => runScenario(p.cmd);
+  presetsEl.appendChild(el);
+});
+document.getElementById('calibBtn').onclick = () => runScenario(CALIBRATION_CMD);
+
+const cmdInput = document.getElementById('cmd');
+const runBtn = document.getElementById('run');
+runBtn.onclick = () => { if (cmdInput.value.trim()) runScenario(cmdInput.value.trim()); };
+cmdInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && cmdInput.value.trim()) runScenario(cmdInput.value.trim()); });
+
+function severityLabel(amp, freq) {
+  const s = (amp + freq) / 2;
+  if (s < 0.2) return "Calm";
+  if (s < 0.4) return "Moderate";
+  if (s < 0.65) return "Severe";
+  return "Extreme";
+}
+
+function renderBadges(state) {
+  const badges = document.getElementById('badges');
+  const defense = state.seawall_active && state.rip_rap_active ? "Seawall + rip-rap"
+                : state.seawall_active ? "Seawall active"
+                : state.rip_rap_active ? "Rip-rap only"
+                : "No defenses";
+  badges.innerHTML = `
+    <span class="badge">🌊 <b>Tide:</b>&nbsp;${state.tide_level.replace('_',' ')}</span>
+    <span class="badge">💨 <b>Wave intensity:</b>&nbsp;${severityLabel(state.wave_amplitude, state.wave_frequency)}</span>
+    <span class="badge">🧱 <b>Defenses:</b>&nbsp;${defense}</span>
+    <span class="badge">⏱️ <b>Simulated:</b>&nbsp;${state.simulated_hours_total}h total</span>
+  `;
+}
+
+function gaugeColor(pct) {
+  if (pct < 25) return "#3ddc84";
+  if (pct < 55) return "#f5c342";
+  if (pct < 80) return "#f5a623";
+  return "#ff5d5d";
+}
+
+function renderGauge(pct) {
+  const circumference = 226;
+  const offset = circumference - (pct / 100) * circumference;
+  const arc = document.getElementById('gaugeArc');
+  arc.style.strokeDashoffset = offset;
+  arc.style.stroke = gaugeColor(pct);
+  document.getElementById('gaugeNum').textContent = pct.toFixed(1) + '%';
+  document.getElementById('gaugeNum').style.color = gaugeColor(pct);
+}
+
+function renderReasoning(trace) {
+  const body = document.getElementById('reasoningBody');
+  if (!trace || !trace.length) {
+    body.innerHTML = '<div class="empty-state">No tool calls yet.</div>';
+    return;
+  }
+  body.innerHTML = trace.map(e => {
+    if (e.type === 'tool_call') {
+      return `<div class="tool-call"><span class="name">${e.name}()</span>\n${JSON.stringify(e.arguments, null, 2)}</div>`;
+    }
+    return `<div class="think-block">${e.text}</div>`;
+  }).join('');
+}
+
+let displayState = null;
+let targetState = null;
+
+async function fetchInitialState() {
+  const res = await fetch('/api/state');
+  targetState = await res.json();
+  displayState = Object.assign({}, targetState);
+  renderBadges(targetState);
+  renderGauge(targetState.erosion_pct);
+}
+
+async function runScenario(command) {
+  cmdInput.value = command;
+  runBtn.disabled = true;
+  runBtn.innerHTML = '<span class="spinner"></span>';
+  document.getElementById('summary').textContent = 'Gemma 4 is reasoning about this scenario…';
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command, fast: true })
+    });
+    const data = await res.json();
+    targetState = data.state;
+    renderBadges(targetState);
+    renderGauge(targetState.erosion_pct);
+    renderReasoning(data.trace);
+    document.getElementById('summary').textContent = data.summary || 'Scenario applied.';
+    document.getElementById('duration').textContent = `Gemma 4 response time: ${data.duration_sec}s`;
+  } catch (err) {
+    document.getElementById('summary').textContent = 'Error running scenario — check the backend is running.';
+  }
+  runBtn.disabled = false;
+  runBtn.textContent = 'Run';
+}
+
+// ---------------- Canvas rendering ----------------
+const canvas = document.getElementById('surge');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+let t = 0;
+let particles = [];
+let lastDebrisThreshold = 0;
+
+function lerp(a, b, f) { return a + (b - a) * f; }
+
+function tideOffsetFor(level) {
+  return { low: -26, neutral: 0, high: 26, king_tide: 48 }[level] ?? 0;
+}
+
+function updateDisplayState() {
+  if (!targetState) return;
+  const speed = 0.035;
+  displayState.erosion_pct = lerp(displayState.erosion_pct, targetState.erosion_pct, speed * 1.3);
+  displayState.wave_amplitude = lerp(displayState.wave_amplitude, targetState.wave_amplitude, speed);
+  displayState.wave_frequency = lerp(displayState.wave_frequency, targetState.wave_frequency, speed);
+  displayState._tideOffsetTarget = tideOffsetFor(targetState.tide_level);
+  displayState._tideOffset = lerp(displayState._tideOffset ?? 0, displayState._tideOffsetTarget, speed);
+  displayState.seawall_active = targetState.seawall_active;
+  displayState.rip_rap_active = targetState.rip_rap_active;
+
+  if (Math.floor(displayState.erosion_pct / 20) > lastDebrisThreshold) {
+    lastDebrisThreshold = Math.floor(displayState.erosion_pct / 20);
+    spawnDebris();
+  }
+}
+
+function spawnDebris() {
+  const baseCliffEdgeX = W * 0.42 + (displayState.erosion_pct / 100) * (W * 0.34);
+  for (let i = 0; i < 14; i++) {
+    particles.push({
+      x: baseCliffEdgeX + (Math.random() - 0.5) * 40,
+      y: H * 0.55 - 80 + Math.random() * 40,
+      vx: (Math.random() - 0.6) * 2,
+      vy: -Math.random() * 2,
+      life: 1.0,
+      size: 3 + Math.random() * 5,
+      color: Math.random() > 0.5 ? '#6b4a3a' : '#8b949e',
+    });
+  }
+}
+
+function skyColors(severity) {
+  if (severity < 0.2) return ['#3a5a78', '#7ba7c9'];
+  if (severity < 0.4) return ['#2e3f52', '#5c7186'];
+  if (severity < 0.65) return ['#22262f', '#3d4550'];
+  return ['#14151b', '#272b33'];
+}
+
+function draw() {
+  const S = displayState;
+  if (!S) { requestAnimationFrame(draw); return; }
+  updateDisplayState();
+
+  const waterY = H * 0.55 - S._tideOffset;
+  const baseCliffEdgeX = W * 0.42;
+  const maxRecedePx = W * 0.34;
+  const cliffEdgeX = baseCliffEdgeX + (S.erosion_pct / 100) * maxRecedePx;
+  const severity = (S.wave_amplitude + S.wave_frequency) / 2;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // sky
+  const [c1, c2] = skyColors(severity);
+  const g = ctx.createLinearGradient(0, 0, 0, waterY + 20);
+  g.addColorStop(0, c1); g.addColorStop(1, c2);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, waterY + 20);
+
+  // storm rain streaks
+  if (severity > 0.45) {
+    ctx.strokeStyle = `rgba(210,225,235,${0.08 + severity * 0.12})`;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 60 * severity; i++) {
+      const rx = (i * 97 + t * 400) % W;
+      const ry = (i * 53) % waterY;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - 14, ry + 22);
+      ctx.stroke();
+    }
+  }
+
+  // location label
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.font = '600 15px -apple-system, sans-serif';
+  ctx.fillText('West Cliff Drive, Santa Cruz, CA', 20, 30);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = '11px ui-monospace, monospace';
+  ctx.fillText('36.9506° N, 122.0288° W', 20, 47);
+
+  // ocean layers
+  const amp = 8 + S.wave_amplitude * 40;
+  const wavelength = 260 - S.wave_frequency * 170;
+  const oceanTop = c => {
+    const layers = [
+      { color: `rgba(56,139,253,0.30)`, speed: 1.0, yOff: -8 },
+      { color: `rgba(31,111,235,0.55)`, speed: 1.35, yOff: 4 },
+      { color: `rgba(9,64,145,0.9)`, speed: 1.7, yOff: 16 },
+    ];
+    layers.forEach((layer) => {
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (let x = 0; x <= cliffEdgeX + 24; x += 6) {
+        const y = waterY + layer.yOff + Math.sin((x / wavelength) + t * layer.speed) * amp;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(cliffEdgeX + 24, H);
+      ctx.closePath();
+      ctx.fillStyle = layer.color;
+      ctx.fill();
+    });
+    // foam crest on top layer
+    if (S.wave_amplitude > 0.35) {
+      ctx.strokeStyle = `rgba(255,255,255,${0.25 + S.wave_amplitude * 0.35})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = 0; x <= cliffEdgeX + 24; x += 6) {
+        const y = waterY - 8 + Math.sin((x / wavelength) + t * 1.0) * amp;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  };
+  oceanTop();
+
+  // sea spray near cliff base
+  if (S.wave_amplitude > 0.3) {
+    const sprayX = cliffEdgeX - 6;
+    const sprayY = waterY + Math.sin(t * 1.6) * amp * 0.4;
+    ctx.fillStyle = `rgba(255,255,255,${0.15 + S.wave_amplitude * 0.25})`;
+    for (let i = 0; i < 6; i++) {
+      const ox = (Math.sin(t * 3 + i) * 10);
+      const oy = -Math.abs(Math.sin(t * 2.2 + i)) * 22 * S.wave_amplitude;
+      ctx.beginPath();
+      ctx.arc(sprayX + ox, sprayY + oy, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // cliff strata
+  const strataColors = ['#4a3826', '#5a4632', '#6b5238', '#7a6142'];
+  const cliffTop = waterY - 62;
+  const bandH = (H - cliffTop) / strataColors.length;
+  strataColors.forEach((col, i) => {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    const y0 = cliffTop + i * bandH;
+    ctx.moveTo(cliffEdgeX, y0);
+    const jag = 7 + S.erosion_pct / 12;
+    ctx.lineTo(cliffEdgeX + (i % 2 === 0 ? jag : -jag * 0.6), y0 + bandH * 0.5);
+    ctx.lineTo(cliffEdgeX, y0 + bandH);
+    ctx.lineTo(W, y0 + bandH);
+    ctx.lineTo(W, y0);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // cracks
+  const crackCount = Math.floor(S.erosion_pct / 15);
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < crackCount; i++) {
+    const cx = cliffEdgeX + 24 + i * 26;
+    if (cx > W - 12) continue;
+    ctx.beginPath();
+    ctx.moveTo(cx, cliffTop);
+    ctx.lineTo(cx + 6, cliffTop + 40);
+    ctx.lineTo(cx - 5, cliffTop + 75);
+    ctx.stroke();
+  }
+
+  // vegetation tufts (fewer as erosion increases)
+  const tuftCount = Math.max(0, Math.round((100 - S.erosion_pct) / 9));
+  for (let i = 0; i < tuftCount; i++) {
+    const tx = cliffEdgeX + 18 + i * 24;
+    if (tx > W - 15) continue;
+    ctx.fillStyle = '#4a7c4e';
+    ctx.beginPath();
+    ctx.ellipse(tx, cliffTop - 3, 7, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // seawall / rip-rap
+  if (S.seawall_active) {
+    ctx.fillStyle = '#9aa4b0';
+    ctx.fillRect(cliffEdgeX - 11, waterY - 34, 13, 96);
+    ctx.fillStyle = '#7a828d';
+    ctx.fillRect(cliffEdgeX - 11, waterY - 34, 13, 8);
+  }
+  if (S.rip_rap_active) {
+    ctx.fillStyle = '#6e7681';
+    for (let i = 0; i < 6; i++) {
+      const rx = cliffEdgeX - 28 - i * 11;
+      const ry = waterY + 12 + (i % 2) * 9;
+      ctx.beginPath();
+      ctx.arc(rx, ry, 9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // road
+  const roadY = cliffTop;
+  const roadW = W - cliffEdgeX;
+  ctx.fillStyle = '#33383f';
+  ctx.fillRect(cliffEdgeX, roadY - 15, roadW, 15);
+  ctx.strokeStyle = '#e8c547';
+  ctx.setLineDash([11, 9]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cliffEdgeX, roadY - 7.5);
+  ctx.lineTo(W, roadY - 7.5);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (S.erosion_pct > 70) {
+    ctx.fillStyle = '#ff5d5d';
+    ctx.font = 'bold 15px -apple-system, sans-serif';
+    ctx.fillText('⚠ ROAD AT RISK', Math.min(cliffEdgeX + 16, W - 170), roadY - 46);
+  }
+  if (S.erosion_pct >= 95) {
+    ctx.fillStyle = '#ff5d5d';
+    ctx.font = 'bold 20px -apple-system, sans-serif';
+    ctx.fillText('⚠️ ROADWAY COLLAPSE', W * 0.52, roadY - 74);
+  }
+
+  // debris particles
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.vy += 0.12;
+    p.x += p.vx; p.y += p.vy;
+    p.life -= 0.012;
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  t += 0.014 + S.wave_frequency * 0.028;
+  requestAnimationFrame(draw);
+}
+
+document.getElementById('resetLink').onclick = async () => {
+  const res = await fetch('/api/reset', { method: 'POST' });
+  targetState = await res.json();
+  lastDebrisThreshold = 0;
+  renderBadges(targetState);
+  renderGauge(targetState.erosion_pct);
+  renderReasoning([]);
+  document.getElementById('summary').textContent = 'Simulation reset to calm baseline.';
+  document.getElementById('duration').textContent = '';
+};
+
+fetchInitialState().then(draw);
+</script>
+</body>
+</html>

@@ -37,12 +37,17 @@ simulated hours) — deliberately not something Gemma computes directly, so the 
 physically sane regardless of what's asked of it. Gemma's role is translation (English → structured
 intent), not arithmetic.
 
-The frontend is a self-contained HTML5 canvas (`app/canvas.py`, no external libraries) showing an
-animated cross-section: layered sine-wave ocean, a cliff face that visibly recedes as cumulative
-erosion increases, cracks that appear and multiply, a seawall block and rip-rap that appear/disappear
-with the agent's tool calls, and a shrinking "West Cliff Drive" road strip that displays "ROAD AT
-RISK" past 70% erosion and "ROADWAY COLLAPSE" past 95%. Everything is driven by state that Gemma's
-tool calls mutated — there is no hard-coded animation independent of the agent's decisions.
+The frontend is a single self-contained HTML page (`web/index.html`, no build step, no external
+libraries) served by a thin Flask API (`server.py`) that does nothing but expose the agent loop over
+`fetch()`. It renders an animated cross-section: storm-graded sky (color and rain intensity shift with
+wave severity), layered foam-capped ocean waves, sea spray at the impact zone, a multi-strata cliff
+face with vegetation that thins as erosion rises, falling debris particles triggered at erosion
+thresholds, a seawall/rip-rap that appear or disappear with the agent's tool calls, and a shrinking
+"West Cliff Drive" road strip that displays "ROAD AT RISK" past 70% erosion and "ROADWAY COLLAPSE"
+past 95%. All simulation state changes animate smoothly (client-side interpolation) rather than
+snapping instantly, and the raw tool-call JSON / model reasoning is tucked behind an opt-in disclosure
+— by default the user only ever sees the simulation and a plain-English summary, never code or
+terminal output.
 
 By default, responses run with Ollama's `think=False`, giving ~7-10 second turnaround for a snappy,
 interactive feel; a toggle re-enables Gemma's full chain-of-thought so the reasoning behind each
